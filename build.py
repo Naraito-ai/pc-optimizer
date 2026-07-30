@@ -1,17 +1,19 @@
 import os
 import sys
-import shutil
 import subprocess
 
 def check_pyinstaller():
-    """Ensure PyInstaller is installed in the current Python environment."""
+    """Check if PyInstaller is installed in the current environment."""
     try:
         import PyInstaller
-        print("[+] PyInstaller module found.")
+        print("[+] PyInstaller module detected.")
     except ImportError:
-        print("[*] PyInstaller not detected. Installing pyinstaller via pip...")
-        subprocess.run([sys.executable, "-m", "pip", "install", "pyinstaller"], check=True)
-        print("[+] PyInstaller installed successfully.")
+        print("[X] PyInstaller missing.")
+        print("Please install development dependencies using:")
+        print("  pip install -r requirements-dev.txt")
+        print("or:")
+        print("  pip install pyinstaller")
+        sys.exit(1)
 
 def build_executable():
     """Build the standalone .exe file using PyInstaller."""
@@ -26,17 +28,13 @@ def build_executable():
     print("      BUILDING PC OPTIMIZER STANDALONE EXECUTABLE")
     print("============================================================\n")
 
-    # PyInstaller flags as specified:
-    # --onefile : Pack into a single executable
-    # --noconsole : Suppress default background console window
-    # --uac-admin : Forces Windows UAC prompt for Administrator elevation on launch
-    # --name : Output filename (optimizer.exe)
     cmd = [
         sys.executable,
         "-m",
         "PyInstaller",
+        "--clean",
         "--onefile",
-        "--noconsole",
+        "--windowed",
         "--uac-admin",
         "--name",
         "optimizer",

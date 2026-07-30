@@ -7,7 +7,7 @@
   <!-- Primary Meta Tags -->
   <title>PC Optimizer — Safe & Open Source Windows Performance App</title>
   <meta name="title" content="PC Optimizer — Safe & Open Source Windows Performance App" />
-  <meta name="description" content="Clean junk files, optimize startup apps, toggle Gaming Mode, and schedule weekly maintenance on Windows 10 & 11. Built with safe defaults and fully open source." />
+  <meta name="description" content="Clean junk files, optimize startup apps safely, toggle Gaming Mode, and schedule weekly maintenance on Windows 10 & 11. Built with safe default rules and fully open source." />
   <meta name="keywords" content="windows optimizer, pc cleaner, speed up windows, gaming mode, open source pc optimizer, safe windows tuning" />
   <meta name="author" content="Naraito-ai" />
 
@@ -336,7 +336,7 @@
 
 <!-- HERO -->
 <section class="hero" aria-labelledby="hero-heading">
-  <div class="hero-badge"><div class="pulse" aria-hidden="true"></div> Modern Desktop App • v2.0</div>
+  <div class="hero-badge"><div class="pulse" aria-hidden="true"></div> Production Release • v2.0.0</div>
   <h1 id="hero-heading">Safe, simple performance tuning<br><span class="hl">for your Windows PC.</span></h1>
   <p class="hero-sub">
     A clean desktop app for Windows 10 &amp; 11. Monitor your PC Health Score, run safe 1-click optimization,
@@ -391,7 +391,7 @@
   <div class="gui-card">
     <div class="gui-hdr">
       <div class="gui-title">⚡ PC Optimizer</div>
-      <div class="gui-ver">Interactive Demo • v2.0</div>
+      <div class="gui-ver">Interactive Demo • v2.0.0</div>
     </div>
     
     <!-- Health score bar -->
@@ -434,13 +434,13 @@
       <div class="screenshot-placeholder">
         <span aria-hidden="true">🖼️</span>
         <div>Desktop App Interface Screenshot</div>
-        <div style="font-size: 11px; opacity: 0.6;">(Screenshot placeholder 1)</div>
+        <div style="font-size: 11px; opacity: 0.6;">(Screenshot Placeholder • Coming Soon)</div>
       </div>
       <!-- Screenshot 2 -->
       <div class="screenshot-placeholder">
         <span aria-hidden="true">📊</span>
         <div>Health Score &amp; Optimization Log</div>
-        <div style="font-size: 11px; opacity: 0.6;">(Screenshot placeholder 2)</div>
+        <div style="font-size: 11px; opacity: 0.6;">(Screenshot Placeholder • Coming Soon)</div>
       </div>
     </div>
   </div>
@@ -494,7 +494,7 @@
       <div class="cmd-box">
         <div>
           <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">optimizer.exe — Windows Desktop App</div>
-          <div style="font-size: 13px; color: var(--muted);">Version 2.0 • Standalone Executable • Open Source</div>
+          <div style="font-size: 13px; color: var(--muted);">Version 2.0.0 • Standalone Executable • Open Source</div>
         </div>
         <a class="dl-btn" href="/optimizer.exe" aria-label="Download optimizer.exe standalone executable">
           ⬇ Download optimizer.exe
@@ -510,7 +510,7 @@
       <!-- SmartScreen Notice -->
       <div class="smartscreen-notice">
         <span aria-hidden="true">ℹ️</span>
-        <div>Windows SmartScreen may display a warning because the application is not code signed yet. This is expected for many independent open-source applications.</div>
+        <div>Windows SmartScreen may display a warning because the application is an independent open-source release without an expensive EV code signing certificate. You can inspect the source code on GitHub.</div>
       </div>
     </div>
 
@@ -519,22 +519,22 @@
       <div class="meta-card">
         <div class="meta-card-title">File Details</div>
         <ul class="meta-list">
-          <li class="meta-item"><span class="meta-key">Version</span><span class="meta-val">v2.0</span></li>
+          <li class="meta-item"><span class="meta-key">Version</span><span class="meta-val">v2.0.0</span></li>
           <li class="meta-item"><span class="meta-key">Platform</span><span class="meta-val">Windows 10/11</span></li>
           <li class="meta-item"><span class="meta-key">File</span><span class="meta-val">optimizer.exe</span></li>
           <li class="meta-item"><span class="meta-key">License</span><span class="meta-val">MIT</span></li>
           <li class="meta-item"><span class="meta-key">Size</span><span class="meta-val">~11 MB</span></li>
+          <li class="meta-item"><span class="meta-key">Checksums</span><span class="meta-val">release_manifest.json</span></li>
         </ul>
       </div>
 
       <div class="meta-card">
         <div class="meta-card-title">Security &amp; Verification</div>
         <div style="font-size: 13px; color: var(--muted); margin-bottom: 10px;">
-          Scan report for release binaries.
+          VirusTotal scan report pending release publishing. SHA256 checksums are available in <code>release_manifest.json</code>.
         </div>
-        <!-- Replace with actual VirusTotal URL -->
-        <a class="vt-scan-btn" href="#" target="_blank" rel="noopener" aria-label="View VirusTotal Scan Report (placeholder link)">
-          🛡️ View Scan
+        <a class="vt-scan-btn" href="release_manifest.json" target="_blank" rel="noopener" aria-label="View Release Manifest JSON">
+          🛡️ View Release Manifest
         </a>
       </div>
     </div>
@@ -546,13 +546,13 @@
   <div class="eyebrow">Updates</div>
   <div class="section-title" id="changelog-heading">Changelog</div>
   <div class="changelog-box">
-    <div class="changelog-ver">v2.0 <span>• Recent Release</span></div>
+    <div class="changelog-ver">v2.0.0 <span>• Production Architecture Release</span></div>
     <ul class="changelog-list">
-      <li>Improved optimizer engine with safe default rules</li>
-      <li>New native desktop GUI app interface</li>
-      <li>Safer cleanup defaults to prevent disk thrashing</li>
-      <li>Automated weekly task scheduler integration</li>
-      <li>Restore normal mode improvements</li>
+      <li>True original state capture and change ownership tracking (restores only optimizer modifications)</li>
+      <li>Startup entries moved to RunDisabled subkey with original state backup (no permanent deletion)</li>
+      <li>Detailed cleanup engine reporting actual vs estimated reclaimed space and skipped locked files</li>
+      <li>Explicit user confirmation dialogs for safe optimization and restoration steps</li>
+      <li>Automated weekly task scheduler integration and desktop GUI interface</li>
     </ul>
   </div>
 </section>
@@ -576,7 +576,7 @@
     </div>
     <div class="faq-item">
       <div class="faq-q">Can I undo changes made by the optimizer?</div>
-      <div class="faq-a">Yes. You can click "Restore Normal" to revert Gaming Mode settings, or use the native System Restore Point created prior to optimization.</div>
+      <div class="faq-a">Yes. Clicking "Restore Normal" restores only the settings modified by this application back to their original captured values.</div>
     </div>
     <div class="faq-item">
       <div class="faq-q">Is it open source?</div>

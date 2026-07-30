@@ -11,7 +11,7 @@ import threading
 import subprocess
 from pathlib import Path
 from datetime import datetime
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import List, Dict, Any, Tuple, Optional
 
 # ── Program Metadata ────────────────────────────────────────────────────────
@@ -36,9 +36,11 @@ except ImportError:
     MISSING_DEPS.append(("tabulate", ">=0.9.0"))
 
 if MISSING_DEPS:
-    dep_msg = "Missing required Python dependencies:\n" + "\n".join(
-        f"  • {pkg} ({ver})" for pkg, ver in MISSING_DEPS
-    ) + "\n\nTo install dependencies, run:\n  pip install -r requirements.txt"
+    dep_msg = (
+        f"Missing required Python dependencies:\n" +
+        "\n".join(f"  • {pkg} ({ver})" for pkg, ver in MISSING_DEPS) +
+        "\n\nTo install dependencies, please run:\n  pip install -r requirements.txt"
+    )
     try:
         import tkinter as tk
         from tkinter import messagebox
@@ -65,22 +67,34 @@ def timestamped_log(msg: str):
     ts = datetime.now().strftime("%H:%M:%S")
     print(f"[{ts}] {msg}")
 
-# ── Data Classes ─────────────────────────────────────────────────────────────
+# ── Dataclasses for State & Metrics ──────────────────────────────────────────
 @dataclass
-class StartupBackupEntry:
-    hive: str           # "HKCU" or "HKLM"
-    key_path: str       # Registry subkey path
-    value_name: str     # Startup value name
-    value_type: int     # Registry value type (e.g. winreg.REG_SZ)
-    value_data: str     # Startup command string
-    timestamp: str      # ISO timestamp
-    app_version: str    # Application version string
+class StartupEntry:
+    hive: str               # "HKCU" or "HKLM"
+    key_path: str           # e.g., "Software\Microsoft\Windows\CurrentVersion\Run"
+    disabled_key_path: str  # e.g., "Software\Microsoft\Windows\CurrentVersion\RunDisabled"
+    value_name: str
+    value_type: int
+    value_data: str
+    timestamp: str
+    app_version: str
+    modified_by_optimizer: bool = True
 
 @dataclass
 class CleanupPlan:
     estimated_bytes: int
     estimated_files: int
     targets: List[str]
+
+@dataclass
+class CleanupResult:
+    estimated_bytes: int
+    estimated_files: int
+    actual_reclaimed_bytes: int
+    files_deleted_count: int
+    locked_files_count: int
+    permission_denied_count: int
+    skipped_files_count: int
 
 # ── System Constants ─────────────────────────────────────────────────────────
 SYSTEM_CRITICAL_PROCESSES = {
@@ -126,8 +140,7 @@ def elevate_if_needed():
             )
             if ret <= 32:
                 try:
-                    root = tk.Tk()
-                    root.withdraw()
+                    root = tk.Tk(); root.withdraw()
                     messagebox.showerror(
                         "Admin Required",
                         "PC Optimizer requires Administrator privileges to tune system settings.\n"
@@ -139,25 +152,55 @@ def elevate_if_needed():
             pass
         sys.exit(0)
 
-# ── State Management ─────────────────────────────────────────────────────────
-def load_state() -> Dict[str, Any]:
-    try:
-        if os.path.exists(STATE_FILE):
-            with open(STATE_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if "startup_backups" not in data:
-                    data["startup_backups"] = []
-                return data
-    except Exception:
-        pass
+# ── True State Management & Change Ownership Tracking ──────────────────────
+def default_state_structure() -> Dict[str, Any]:
     return {
+        "version": VERSION,
         "last_run": "Never",
         "last_score_before": 0,
         "last_score_after": 0,
         "gaming_mode": False,
         "is_scheduled": False,
-        "startup_backups": []
+        "modified_settings": {
+            "power_plan": {
+                "original_scheme_guid": None,
+                "modified_by_optimizer": False
+            },
+            "visual_effects": {
+                "original_fx_setting": None,
+                "original_min_animate": None,
+                "modified_by_optimizer": False
+            },
+            "gamedvr": {
+                "original_gamedvr_enabled": None,
+                "original_appcapture_enabled": None,
+                "modified_by_optimizer": False
+            },
+            "telemetry_service": {
+                "original_start_type": None,
+                "original_state": None,
+                "modified_by_optimizer": False
+            },
+            "scheduled_task": {
+                "created_by_optimizer": False
+            },
+            "startup_entries": []
+        }
     }
+
+def load_state() -> Dict[str, Any]:
+    try:
+        if os.path.exists(STATE_FILE):
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if "modified_settings" not in data:
+                    def_st = default_state_structure()
+                    def_st.update(data)
+                    data = def_st
+                return data
+    except Exception:
+        pass
+    return default_state_structure()
 
 def save_state(data: Dict[str, Any]):
     try:
@@ -201,10 +244,12 @@ def calculate_health_score() -> Tuple[int, str, List[str]]:
     user_tmp = os.environ.get("TEMP", r"C:\Windows\Temp")
     temp_size_mb = 0
     try:
-        for root, _, files in os.walk(user_tmp):
+        for root, _, files in os.walk(user_tmp, followlinks=False):
             for f in files:
                 try:
-                    temp_size_mb += os.path.getsize(os.path.join(root, f)) / (1024 * 1024)
+                    fp = os.path.join(root, f)
+                    if not os.path.islink(fp):
+                        temp_size_mb += os.path.getsize(fp) / (1024 * 1024)
                 except Exception:
                     pass
             if temp_size_mb > 2000:
@@ -250,7 +295,7 @@ def calculate_health_score() -> Tuple[int, str, List[str]]:
     status = "Excellent" if score >= 85 else ("Good" if score >= 70 else ("Fair" if score >= 50 else "Poor"))
     return score, status, issues
 
-# ── Cleanup Engine (Planning, Safe Walking & Execution) ──────────────────────
+# ── Cleanup Engine (Planning, Dry-Run & Safe Execution) ──────────────────────
 def get_cleanup_targets(advanced_mode: bool = False) -> List[str]:
     local = os.environ.get("LOCALAPPDATA", "")
     user_tmp = os.environ.get("TEMP", "")
@@ -273,7 +318,7 @@ def get_cleanup_targets(advanced_mode: bool = False) -> List[str]:
     return [t for t in targets if t and os.path.exists(t)]
 
 def estimate_cleanup_size(advanced_mode: bool = False) -> CleanupPlan:
-    """Performs a safe dry-run scan to estimate reclaimable space."""
+    """Performs a dry-run scan without deleting anything."""
     targets = get_cleanup_targets(advanced_mode)
     total_bytes = 0
     total_files = 0
@@ -294,10 +339,10 @@ def estimate_cleanup_size(advanced_mode: bool = False) -> CleanupPlan:
 
     return CleanupPlan(estimated_bytes=total_bytes, estimated_files=total_files, targets=targets)
 
-def clean_temp_files_log(logger=timestamped_log, advanced_mode: bool = False) -> float:
+def clean_temp_files_log(logger=timestamped_log, advanced_mode: bool = False) -> CleanupResult:
     logger("[3/6] Cleaning temporary files & system caches...")
     
-    # Handle Windows Update service safely if advanced cleanup includes SoftwareDistribution
+    # Handle Windows Update service if advanced cleanup includes SoftwareDistribution
     wuauserv_stopped = False
     if advanced_mode:
         try:
@@ -308,11 +353,14 @@ def clean_temp_files_log(logger=timestamped_log, advanced_mode: bool = False) ->
 
     plan = estimate_cleanup_size(advanced_mode)
     est_mb = plan.estimated_bytes / (1024 ** 2)
-    logger(f"  ℹ Dry-run estimate: ~{est_mb:.1f} MB in {plan.estimated_files} file(s)")
+    logger(f"  ℹ Dry-run estimation: ~{est_mb:.1f} MB in {plan.estimated_files} candidate file(s)")
 
     bytes_freed = 0
     files_deleted = 0
-    
+    locked_count = 0
+    perm_denied_count = 0
+    skipped_count = 0
+
     for d in plan.targets:
         try:
             for root, _, files in os.walk(d, followlinks=False):
@@ -321,14 +369,22 @@ def clean_temp_files_log(logger=timestamped_log, advanced_mode: bool = False) ->
                     try:
                         if os.path.islink(fp):
                             os.unlink(fp)
+                            files_deleted += 1
                         else:
                             sz = os.path.getsize(fp)
                             os.remove(fp)
                             bytes_freed += sz
                             files_deleted += 1
-                    except (PermissionError, FileNotFoundError, OSError):
-                        pass
-        except (PermissionError, FileNotFoundError, OSError):
+                    except PermissionError:
+                        perm_denied_count += 1
+                    except OSError as e:
+                        if getattr(e, 'winerror', 0) in (32, 33):  # File locked by another process
+                            locked_count += 1
+                        else:
+                            skipped_count += 1
+                    except FileNotFoundError:
+                        skipped_count += 1
+        except Exception:
             pass
 
     if wuauserv_stopped:
@@ -340,8 +396,22 @@ def clean_temp_files_log(logger=timestamped_log, advanced_mode: bool = False) ->
     mb = bytes_freed / (1024 ** 2)
     gb = bytes_freed / (1024 ** 3)
     freed_str = f"{gb:.2f} GB" if gb >= 1.0 else f"{mb:.1f} MB"
+    
+    result = CleanupResult(
+        estimated_bytes=plan.estimated_bytes,
+        estimated_files=plan.estimated_files,
+        actual_reclaimed_bytes=bytes_freed,
+        files_deleted_count=files_deleted,
+        locked_files_count=locked_count,
+        permission_denied_count=perm_denied_count,
+        skipped_files_count=skipped_count
+    )
+
     logger(f"  ✔ Cleared safe caches. Actual space freed: {freed_str} ({files_deleted} files removed)")
-    return mb
+    if locked_count > 0 or perm_denied_count > 0:
+        logger(f"  ℹ Safely skipped {locked_count} locked file(s) and {perm_denied_count} protected file(s).")
+
+    return result
 
 # ── Restore Point ─────────────────────────────────────────────────────────────
 def create_restore_point_log(logger=timestamped_log):
@@ -373,14 +443,43 @@ def kill_bloatware_log(logger=timestamped_log):
     else:
         logger("  ✔ No active bloatware processes running.")
 
-# ── Power & Visual Effects Optimizer ─────────────────────────────────────────
+# ── Power & Visual Effects Optimizer (With State Capture) ───────────────────
 def optimize_power_and_visuals_log(logger=timestamped_log):
     logger("[4/6] Setting Balanced power plan & optimizing visual effects...")
+    state = load_state()
+    ms = state["modified_settings"]
+
+    # 1. Capture & Set Power Plan
+    if not ms["power_plan"]["modified_by_optimizer"]:
+        try:
+            res = subprocess.run(["powercfg", "/getactivescheme"], capture_output=True, text=True)
+            if res.returncode == 0:
+                guid = res.stdout.split(":")[1].strip().split()[0]
+                ms["power_plan"]["original_scheme_guid"] = guid
+        except Exception:
+            pass
+
     try:
         subprocess.run(["powercfg", "/setactive", "SCHEME_BALANCED"], check=True, capture_output=True)
+        ms["power_plan"]["modified_by_optimizer"] = True
         logger("  ✔ Power plan set to Balanced (safe, prevents thermal throttling).")
     except Exception as e:
         logger(f"  ⚠️ Power plan notice: {e}")
+
+    # 2. Capture & Set Visual Effects
+    if not ms["visual_effects"]["modified_by_optimizer"]:
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects", 0, winreg.KEY_READ) as k:
+                val, _ = winreg.QueryValueEx(k, "VisualFXSetting")
+                ms["visual_effects"]["original_fx_setting"] = val
+        except Exception:
+            pass
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Control Panel\Desktop", 0, winreg.KEY_READ) as k:
+                val, _ = winreg.QueryValueEx(k, "MinAnimate")
+                ms["visual_effects"]["original_min_animate"] = str(val)
+        except Exception:
+            pass
 
     try:
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as k:
@@ -393,69 +492,104 @@ def optimize_power_and_visuals_log(logger=timestamped_log):
             _fields_ = [("cbSize", ctypes.c_uint), ("iMinAnimate", ctypes.c_int)]
         ai = ANIMATIONINFO(ctypes.sizeof(ANIMATIONINFO), 0)
         ctypes.windll.user32.SystemParametersInfoW(SPI_SETANIMATION, ctypes.sizeof(ANIMATIONINFO), ctypes.byref(ai), 3)
+        ms["visual_effects"]["modified_by_optimizer"] = True
         logger("  ✔ Windows visual animations optimized for responsiveness.")
     except Exception as e:
         logger(f"  ⚠️ Visual effects notice: {e}")
 
-# ── Startup & Services Management (With State Backup) ────────────────────────
+    save_state(state)
+
+# ── Startup & Services Management (Disable via Move to RunDisabled) ────────
 def optimize_startup_and_services_log(logger=timestamped_log):
     logger("[5/6] Tuning startup apps & background telemetry...")
     state = load_state()
-    backups = state.get("startup_backups", [])
+    ms = state["modified_settings"]
+    startup_backups = ms.get("startup_entries", [])
 
     locations = [
-        (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", "HKCU"),
-        (winreg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\Run", "HKLM"),
+        (winreg.HKEY_CURRENT_USER,
+         r"Software\Microsoft\Windows\CurrentVersion\Run",
+         r"Software\Microsoft\Windows\CurrentVersion\RunDisabled",
+         "HKCU"),
+        (winreg.HKEY_LOCAL_MACHINE,
+         r"Software\Microsoft\Windows\CurrentVersion\Run",
+         r"Software\Microsoft\Windows\CurrentVersion\RunDisabled",
+         "HKLM"),
     ]
     disabled_startup = 0
 
-    for hkey, path, label in locations:
+    for hkey, run_path, disabled_path, label in locations:
         try:
-            with winreg.OpenKey(hkey, path, 0, winreg.KEY_READ) as k:
+            with winreg.OpenKey(hkey, run_path, 0, winreg.KEY_READ) as k:
                 idx = 0
                 while True:
                     try:
                         name, val_data, val_type = winreg.EnumValue(k, idx)
                         name_l, cmd_l = name.lower(), str(val_data).lower()
                         protected = any(kw in name_l or kw in cmd_l for kw in STARTUP_PROTECTED_KEYWORDS)
-                        deleted = False
+                        moved = False
                         if not protected:
                             try:
-                                # Backup entry to state
-                                backup_entry = StartupBackupEntry(
-                                    hive=label, key_path=path, value_name=name,
-                                    value_type=val_type, value_data=str(val_data),
-                                    timestamp=datetime.now().isoformat(), app_version=VERSION
-                                )
-                                backups.append(asdict(backup_entry))
+                                # 1. Copy entry to RunDisabled subkey (Disable strategy, not permanent deletion)
+                                with winreg.CreateKey(hkey, disabled_path) as dk:
+                                    winreg.SetValueEx(dk, name, 0, val_type, val_data)
 
-                                with winreg.OpenKey(hkey, path, 0, winreg.KEY_SET_VALUE) as wk:
-                                    winreg.DeleteValue(wk, name)
+                                # 2. Save backup metadata to state
+                                entry = StartupEntry(
+                                    hive=label,
+                                    key_path=run_path,
+                                    disabled_key_path=disabled_path,
+                                    value_name=name,
+                                    value_type=val_type,
+                                    value_data=str(val_data),
+                                    timestamp=datetime.now().isoformat(),
+                                    app_version=VERSION,
+                                    modified_by_optimizer=True
+                                )
+                                startup_backups.append(asdict(entry))
+
+                                # 3. Remove entry from Run subkey
+                                with winreg.OpenKey(hkey, run_path, 0, winreg.KEY_SET_VALUE) as rk:
+                                    winreg.DeleteValue(rk, name)
+
                                 disabled_startup += 1
-                                logger(f"  ✔ Backed up & disabled startup app: '{name}'")
-                                deleted = True
+                                logger(f"  ✔ Moved startup app to RunDisabled: '{name}'")
+                                moved = True
                             except Exception as e:
                                 logger(f"  ⚠️ Could not disable '{name}': {e}")
-                        if not deleted:
+                        if not moved:
                             idx += 1
                     except OSError:
                         break
         except Exception:
             continue
 
-    state["startup_backups"] = backups
-    save_state(state)
+    ms["startup_entries"] = startup_backups
 
-    # Telemetry service only (WSearch removed to preserve start menu & file search)
-    services = [("DiagTrack", "Windows Telemetry")]
-    for svc, display in services:
+    # Telemetry Service (Capture Original State First)
+    if not ms["telemetry_service"]["modified_by_optimizer"]:
         try:
-            subprocess.run(["sc", "stop", svc], capture_output=True)
-            res = subprocess.run(["sc", "config", svc, "start=disabled"], capture_output=True)
-            if res.returncode == 0:
-                logger(f"  ✔ Stopped & disabled: {display}")
+            res_cfg = subprocess.run(["sc", "qc", "DiagTrack"], capture_output=True, text=True)
+            if "START_TYPE" in res_cfg.stdout:
+                st = res_cfg.stdout.split("START_TYPE")[1].split()[1].lower()
+                ms["telemetry_service"]["original_start_type"] = st
+            res_q = subprocess.run(["sc", "query", "DiagTrack"], capture_output=True, text=True)
+            if "STATE" in res_q.stdout:
+                st = res_q.stdout.split("STATE")[1].split()[1].upper()
+                ms["telemetry_service"]["original_state"] = st
         except Exception:
             pass
+
+    try:
+        subprocess.run(["sc", "stop", "DiagTrack"], capture_output=True)
+        res = subprocess.run(["sc", "config", "DiagTrack", "start=disabled"], capture_output=True)
+        if res.returncode == 0:
+            ms["telemetry_service"]["modified_by_optimizer"] = True
+            logger("  ✔ Stopped & disabled: Windows Telemetry (DiagTrack)")
+    except Exception:
+        pass
+
+    save_state(state)
 
 # ── Network Stack Tweaks ──────────────────────────────────────────────────────
 def optimize_network_log(logger=timestamped_log):
@@ -477,6 +611,23 @@ def optimize_network_log(logger=timestamped_log):
 # ── Gaming Mode Functions ─────────────────────────────────────────────────────
 def enable_gaming_mode_log(logger=timestamped_log):
     logger("🎮 Enabling Gaming Mode...")
+    state = load_state()
+    ms = state["modified_settings"]
+
+    if not ms["gamedvr"]["modified_by_optimizer"]:
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore", 0, winreg.KEY_READ) as k:
+                val, _ = winreg.QueryValueEx(k, "GameDVR_Enabled")
+                ms["gamedvr"]["original_gamedvr_enabled"] = val
+        except Exception:
+            pass
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR", 0, winreg.KEY_READ) as k:
+                val, _ = winreg.QueryValueEx(k, "AppCaptureEnabled")
+                ms["gamedvr"]["original_appcapture_enabled"] = val
+        except Exception:
+            pass
+
     # 1. Power Plan -> High Performance or Ultimate Performance
     try:
         res = subprocess.run(["powercfg", "/setactive", "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"], capture_output=True)
@@ -492,77 +643,122 @@ def enable_gaming_mode_log(logger=timestamped_log):
             winreg.SetValueEx(k, "GameDVR_Enabled", 0, winreg.REG_DWORD, 0)
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR") as k:
             winreg.SetValueEx(k, "AppCaptureEnabled", 0, winreg.REG_DWORD, 0)
+        ms["gamedvr"]["modified_by_optimizer"] = True
         logger("  ✔ Disabled GameDVR background video capture (reduces micro-stutter).")
     except Exception as e:
         logger(f"  ⚠️ GameDVR notice: {e}")
 
-    # 3. Clean up non-essential background processes
     kill_bloatware_log(logger)
+    state["gaming_mode"] = True
+    save_state(state)
     logger("🎮 Gaming Mode active! Remember to restore Normal mode when finished.")
 
 def restore_normal_mode_log(logger=timestamped_log):
-    logger("↩ Restoring Normal Mode (Reverting all reversible changes)...")
+    logger("↩ Restoring Normal Mode (Restoring ORIGINAL values only)...")
     state = load_state()
+    ms = state["modified_settings"]
 
-    # 1. Revert Power Plan to Balanced
-    try:
-        subprocess.run(["powercfg", "/setactive", "SCHEME_BALANCED"], capture_output=True)
-        logger("  ✔ Power plan restored to Balanced (cool & quiet).")
-    except Exception as e:
-        logger(f"  ⚠️ Power plan notice: {e}")
+    # 1. Restore Power Plan if modified by optimizer
+    if ms["power_plan"]["modified_by_optimizer"]:
+        orig_guid = ms["power_plan"].get("original_scheme_guid") or "SCHEME_BALANCED"
+        try:
+            subprocess.run(["powercfg", "/setactive", orig_guid], capture_output=True)
+            ms["power_plan"]["modified_by_optimizer"] = False
+            logger(f"  ✔ Power plan restored to original state ({orig_guid}).")
+        except Exception as e:
+            logger(f"  ⚠️ Power plan restore notice: {e}")
 
-    # 2. Re-enable Visual Effects animations
-    try:
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as k:
-            winreg.SetValueEx(k, "VisualFXSetting", 0, winreg.REG_DWORD, 0)
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Control Panel\Desktop", 0, winreg.KEY_SET_VALUE) as k:
-            winreg.SetValueEx(k, "MinAnimate", 0, winreg.REG_SZ, "1")
-        
+    # 2. Restore Visual Effects if modified by optimizer
+    if ms["visual_effects"]["modified_by_optimizer"]:
+        orig_fx = ms["visual_effects"].get("original_fx_setting")
+        orig_anim = ms["visual_effects"].get("original_min_animate")
+        if orig_fx is not None:
+            try:
+                with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects") as k:
+                    winreg.SetValueEx(k, "VisualFXSetting", 0, winreg.REG_DWORD, orig_fx)
+            except Exception:
+                pass
+        if orig_anim is not None:
+            try:
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Control Panel\Desktop", 0, winreg.KEY_SET_VALUE) as k:
+                    winreg.SetValueEx(k, "MinAnimate", 0, winreg.REG_SZ, str(orig_anim))
+            except Exception:
+                pass
+
         SPI_SETANIMATION = 0x0043
         class ANIMATIONINFO(ctypes.Structure):
             _fields_ = [("cbSize", ctypes.c_uint), ("iMinAnimate", ctypes.c_int)]
-        ai = ANIMATIONINFO(ctypes.sizeof(ANIMATIONINFO), 1)
-        ctypes.windll.user32.SystemParametersInfoW(SPI_SETANIMATION, ctypes.sizeof(ANIMATIONINFO), ctypes.byref(ai), 3)
-        logger("  ✔ Default Windows visual effects & animations restored.")
-    except Exception as e:
-        logger(f"  ⚠️ Visual effects restore notice: {e}")
-
-    # 3. Re-enable GameDVR background recording settings (AppCaptureEnabled set to 1)
-    try:
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore") as k:
-            winreg.SetValueEx(k, "GameDVR_Enabled", 0, winreg.REG_DWORD, 1)
-        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR") as k:
-            winreg.SetValueEx(k, "AppCaptureEnabled", 0, winreg.REG_DWORD, 1)
-        logger("  ✔ GameDVR background recording settings restored.")
-    except Exception as e:
-        logger(f"  ⚠️ GameDVR restore notice: {e}")
-
-    # 4. Re-enable DiagTrack service back to Windows default (start=auto)
-    try:
-        subprocess.run(["sc", "config", "DiagTrack", "start=auto"], capture_output=True)
-        subprocess.run(["sc", "start", "DiagTrack"], capture_output=True)
-        logger("  ✔ Re-enabled Windows Telemetry (DiagTrack) service.")
-    except Exception as e:
-        logger(f"  ⚠️ DiagTrack restore notice: {e}")
-
-    # 5. Restore backed up startup entries from state file
-    backups = state.get("startup_backups", [])
-    restored_startup = 0
-    for entry in backups:
+        ai_val = 1 if (orig_anim == "1" or orig_anim is None) else 0
+        ai = ANIMATIONINFO(ctypes.sizeof(ANIMATIONINFO), ai_val)
         try:
-            hkey = winreg.HKEY_CURRENT_USER if entry["hive"] == "HKCU" else winreg.HKEY_LOCAL_MACHINE
-            with winreg.OpenKey(hkey, entry["key_path"], 0, winreg.KEY_SET_VALUE) as wk:
-                winreg.SetValueEx(wk, entry["value_name"], 0, entry["value_type"], entry["value_data"])
-            restored_startup += 1
-            logger(f"  ✔ Restored startup entry: '{entry['value_name']}'")
-        except Exception as e:
-            logger(f"  ⚠️ Could not restore startup entry '{entry.get('value_name')}': {e}")
+            ctypes.windll.user32.SystemParametersInfoW(SPI_SETANIMATION, ctypes.sizeof(ANIMATIONINFO), ctypes.byref(ai), 3)
+        except Exception:
+            pass
+        ms["visual_effects"]["modified_by_optimizer"] = False
+        logger("  ✔ Visual effects restored to original state.")
 
-    state["startup_backups"] = []
+    # 3. Restore GameDVR if modified by optimizer
+    if ms["gamedvr"]["modified_by_optimizer"]:
+        orig_gdvr = ms["gamedvr"].get("original_gamedvr_enabled")
+        orig_acap = ms["gamedvr"].get("original_appcapture_enabled")
+        gdvr_val = 1 if orig_gdvr is None else orig_gdvr
+        acap_val = 1 if orig_acap is None else orig_acap
+        try:
+            with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore") as k:
+                winreg.SetValueEx(k, "GameDVR_Enabled", 0, winreg.REG_DWORD, gdvr_val)
+            with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR") as k:
+                winreg.SetValueEx(k, "AppCaptureEnabled", 0, winreg.REG_DWORD, acap_val)
+            ms["gamedvr"]["modified_by_optimizer"] = False
+            logger("  ✔ GameDVR settings restored to original state.")
+        except Exception as e:
+            logger(f"  ⚠️ GameDVR restore notice: {e}")
+
+    # 4. Restore Telemetry Service ONLY if modified by optimizer
+    if ms["telemetry_service"]["modified_by_optimizer"]:
+        orig_st = ms["telemetry_service"].get("original_start_type") or "auto"
+        orig_state = ms["telemetry_service"].get("original_state") or "RUNNING"
+        try:
+            subprocess.run(["sc", "config", "DiagTrack", f"start={orig_st}"], capture_output=True)
+            if orig_state == "RUNNING":
+                subprocess.run(["sc", "start", "DiagTrack"], capture_output=True)
+            ms["telemetry_service"]["modified_by_optimizer"] = False
+            logger(f"  ✔ Telemetry service (DiagTrack) restored to original start mode ({orig_st}).")
+        except Exception as e:
+            logger(f"  ⚠️ Telemetry service restore notice: {e}")
+    else:
+        logger("  ℹ Telemetry service was not modified by optimizer — keeping existing status.")
+
+    # 5. Restore Disabled Startup Entries (Recreate in Run and delete from RunDisabled)
+    startup_entries = ms.get("startup_entries", [])
+    restored_count = 0
+    remaining_entries = []
+
+    for entry in startup_entries:
+        if entry.get("modified_by_optimizer", False):
+            try:
+                hkey = winreg.HKEY_CURRENT_USER if entry["hive"] == "HKCU" else winreg.HKEY_LOCAL_MACHINE
+                # Recreate in Run
+                with winreg.OpenKey(hkey, entry["key_path"], 0, winreg.KEY_SET_VALUE) as rk:
+                    winreg.SetValueEx(rk, entry["value_name"], 0, entry["value_type"], entry["value_data"])
+                # Remove from RunDisabled
+                try:
+                    with winreg.OpenKey(hkey, entry["disabled_key_path"], 0, winreg.KEY_SET_VALUE) as dk:
+                        winreg.DeleteValue(dk, entry["value_name"])
+                except Exception:
+                    pass
+                restored_count += 1
+                logger(f"  ✔ Restored startup entry: '{entry['value_name']}'")
+            except Exception as e:
+                logger(f"  ⚠️ Could not restore startup entry '{entry.get('value_name')}': {e}")
+                remaining_entries.append(entry)
+        else:
+            remaining_entries.append(entry)
+
+    ms["startup_entries"] = remaining_entries
     state["gaming_mode"] = False
     save_state(state)
 
-    logger("✔ Restored all reversible settings to Normal Mode.")
+    logger(f"✔ Restore complete. Reverted all settings modified by this application.")
 
 # ── Task Scheduler (Weekly Schedule) ──────────────────────────────────────────
 def is_task_scheduled() -> bool:
@@ -575,11 +771,15 @@ def is_task_scheduled() -> bool:
 def toggle_weekly_schedule_log(logger=timestamped_log) -> bool:
     scheduled = is_task_scheduled()
     exe_path = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
+    state = load_state()
     
     if scheduled:
         logger("⏰ Removing weekly automatic optimization schedule...")
         res = subprocess.run(["schtasks", "/delete", "/tn", "PCOptimizerWeekly", "/f"], capture_output=True, text=True)
         if res.returncode == 0:
+            state["modified_settings"]["scheduled_task"]["created_by_optimizer"] = False
+            state["is_scheduled"] = False
+            save_state(state)
             logger("  ✔ Weekly schedule removed.")
             return False
         else:
@@ -599,6 +799,9 @@ def toggle_weekly_schedule_log(logger=timestamped_log) -> bool:
         ]
         res = subprocess.run(cmd, capture_output=True, text=True)
         if res.returncode == 0:
+            state["modified_settings"]["scheduled_task"]["created_by_optimizer"] = True
+            state["is_scheduled"] = True
+            save_state(state)
             logger("  ✔ Weekly schedule created! Runs Sundays at 3 AM.")
             return True
         else:
@@ -807,6 +1010,21 @@ class PCOptimizerGUI:
     def on_optimize_clicked(self):
         if self.is_running:
             return
+        
+        # Confirmation prompt for safe optimization
+        if not messagebox.askyesno(
+            "Confirm Safe Optimization",
+            "PC Optimizer will now execute safe system tuning:\n\n"
+            "• Create a System Restore Point\n"
+            "• Clean temporary files & browser caches\n"
+            "• Configure Balanced power plan & visual animations\n"
+            "• Move non-essential startup apps to RunDisabled (backed up)\n"
+            "• Disable background telemetry (DiagTrack)\n"
+            "• Flush DNS & reset network stack\n\n"
+            "Would you like to proceed?"
+        ):
+            return
+
         self.set_running_state(True)
         self.log_area.delete("1.0", tk.END)
         self.log("🚀 Starting Safe 1-Click PC Optimization...")
@@ -856,6 +1074,18 @@ class PCOptimizerGUI:
     def on_restore_clicked(self):
         if self.is_running:
             return
+        if not messagebox.askyesno(
+            "Confirm Restore Normal Mode",
+            "This will revert all settings modified by PC Optimizer back to their ORIGINAL captured values.\n\n"
+            "• Restore original Power Plan\n"
+            "• Restore original Visual Effects\n"
+            "• Restore GameDVR settings\n"
+            "• Restore Telemetry service mode (only if modified by this app)\n"
+            "• Restore disabled startup entries\n\n"
+            "Proceed with restore?"
+        ):
+            return
+
         self.set_running_state(True)
         self.log("\n↩ Restoring Normal System Settings...")
 

@@ -6,20 +6,20 @@
   "signature_status": "Unsigned (Independent Open-Source)",
   "artifacts": {
     "optimizer.exe": {
-      "size_bytes": 11651668,
-      "sha256": "68af5222db46614fc36bb4bcf9faccb262d93cb2b362ba758287a1e50186295d"
+      "size_bytes": 11658704,
+      "sha256": "aff8e3fea11ec763970f6055fa90cc58ef6a10f5c92baca422a6e27183a82c9f"
     },
     "optimizer.py": {
-      "size_bytes": 41572,
-      "sha256": "c3fadcd6274f298999de3d31809f1cfa14d6575d653294242d0b7afbb36968da"
+      "size_bytes": 51185,
+      "sha256": "9bbdd2cb940113b7835b0c4e1fe839b4621d18132dfba4529b723e3a97ab241f"
     },
     "install.ps1": {
       "size_bytes": 4505,
       "sha256": "f5ea325c122cc720ffa282efa6506637f4f997a38b3a5bef8523b765809b738a"
     },
     "index.html": {
-      "size_bytes": 32093,
-      "sha256": "686cab35a7a8a22b304f558a3c829c1167ca46fe41487dba0f34eb867a9aead7"
+      "size_bytes": 32591,
+      "sha256": "b0aafa757be71c2df41425e205b74cd7bec508e8672dbfe6e8ce5abe153a0067"
     },
     "emergency_fix.ps1": {
       "size_bytes": 3760,
