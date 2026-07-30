@@ -3,15 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PC Optimizer — Modern Windows PC Performance App</title>
-  <meta name="description" content="One-click Windows performance app. Live health score, 1-click safe optimization, gaming mode, and automated weekly schedule." />
-  <meta name="keywords" content="windows optimizer, pc cleaner, speed up windows, gaming mode, open source pc optimizer" />
+
+  <!-- Primary Meta Tags -->
+  <title>PC Optimizer — Safe & Open Source Windows Performance App</title>
+  <meta name="title" content="PC Optimizer — Safe & Open Source Windows Performance App" />
+  <meta name="description" content="Clean junk files, optimize startup apps, toggle Gaming Mode, and schedule weekly maintenance on Windows 10 & 11. Built with safe defaults and fully open source." />
+  <meta name="keywords" content="windows optimizer, pc cleaner, speed up windows, gaming mode, open source pc optimizer, safe windows tuning" />
   <meta name="author" content="Naraito-ai" />
+
+  <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://pc-optimizer-tau.vercel.app/" />
-  <meta property="og:title" content="PC Optimizer — Modern Windows PC Performance App" />
-  <meta property="og:description" content="One-click GUI app for Windows. Health Score, Gaming Mode, and automated weekly tuning. 100% Free & Open Source." />
+  <meta property="og:title" content="PC Optimizer — Safe & Open Source Windows Performance App" />
+  <meta property="og:description" content="Clean desktop app for Windows 10 & 11. PC Health Score, 1-click safe cleanup, Gaming Mode, and automated weekly maintenance." />
+
+  <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -36,7 +45,7 @@
       --purple:       #a855f7;
       --cyan:         #38bdf8;
       --warn:         #fbbf24;
-      --font:  'Inter', system-ui, sans-serif;
+      --font:  'Inter', system-ui, -apple-system, sans-serif;
       --mono:  'JetBrains Mono', monospace;
     }
 
@@ -52,6 +61,7 @@
       overflow-x: hidden;
     }
 
+    /* Ambient glow background */
     body::before {
       content: '';
       position: fixed;
@@ -62,6 +72,12 @@
       pointer-events: none;
       z-index: 0;
       filter: blur(60px);
+    }
+
+    /* Focus Outline for Accessibility */
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
     }
 
     /* ── NAV ── */
@@ -102,7 +118,7 @@
     .hero {
       position: relative; z-index: 1;
       max-width: 900px; margin: 0 auto;
-      padding: 100px 2rem 50px; text-align: center;
+      padding: 100px 2rem 40px; text-align: center;
     }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
@@ -116,7 +132,7 @@
 
     h1 { font-size: clamp(2.4rem,6vw,4.2rem); font-weight: 700; letter-spacing: -1.8px; line-height: 1.08; margin-bottom: 22px; color: #fff; }
     .hl { background: linear-gradient(135deg,#00e5a0,#a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .hero-sub { font-size: 19px; color: var(--muted); max-width: 640px; margin: 0 auto 40px; line-height: 1.6; }
+    .hero-sub { font-size: 19px; color: var(--muted); max-width: 640px; margin: 0 auto 36px; line-height: 1.6; }
     .hero-btns { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
 
     .btn-primary {
@@ -135,8 +151,30 @@
     }
     .btn-secondary:hover { background: var(--surface3); border-color: rgba(255,255,255,.3); transform: translateY(-2px); }
 
-    /* ── GUI MOCKUP / PREVIEW ── */
-    .app-preview-wrap { max-width: 720px; margin: 50px auto 0; padding: 0 1.5rem; position: relative; z-index: 2; }
+    /* ── TRUST PILLARS SECTION ── */
+    .trust-section {
+      max-width: 950px; margin: 20px auto 50px; padding: 0 1.5rem;
+      position: relative; z-index: 2;
+    }
+    .trust-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;
+    }
+    .trust-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 20px; display: flex; align-items: flex-start; gap: 12px;
+      transition: border-color 0.2s;
+    }
+    .trust-card:hover { border-color: var(--accent-bd); }
+    .trust-icon {
+      width: 24px; height: 24px; border-radius: 50%; background: var(--accent-dim);
+      border: 1px solid var(--accent-bd); color: var(--accent); font-size: 12px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+    }
+    .trust-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+    .trust-desc { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+
+    /* ── GUI PREVIEW MOCKUP ── */
+    .app-preview-wrap { max-width: 720px; margin: 40px auto 0; padding: 0 1.5rem; position: relative; z-index: 2; }
     .gui-card {
       background: #12121a; border: 1px solid var(--border-hi); border-radius: 16px;
       box-shadow: 0 25px 60px rgba(0,0,0,.8), 0 0 40px rgba(0,229,160,.08);
@@ -169,11 +207,26 @@
 
     .gui-log-box { background: #09090d; border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-family: var(--mono); font-size: 12px; color: #9ca3af; height: 110px; overflow-y: auto; text-align: left; }
 
-    /* ── FEATURES ── */
-    .section { max-width: 1000px; margin: 0 auto; padding: 80px 1.5rem; }
-    .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
-    .section-title { font-size: clamp(1.8rem,3.5vw,2.5rem); font-weight: 700; letter-spacing: -1px; color: #fff; margin-bottom: 48px; line-height: 1.2; }
+    /* ── SCREENSHOTS PLACEHOLDER AREA ── */
+    .screenshots-wrap {
+      max-width: 900px; margin: 40px auto 0; padding: 0 1.5rem; text-align: center;
+    }
+    .screenshots-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 20px;
+    }
+    .screenshot-placeholder {
+      background: var(--surface); border: 1px dashed var(--border-hi); border-radius: 12px;
+      padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 180px; color: var(--subtle); font-size: 13px; gap: 8px;
+    }
+    .screenshot-placeholder span { font-size: 24px; opacity: 0.6; }
 
+    /* ── SECTION COMMON ── */
+    .section { max-width: 1000px; margin: 0 auto; padding: 75px 1.5rem; }
+    .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+    .section-title { font-size: clamp(1.8rem,3.5vw,2.5rem); font-weight: 700; letter-spacing: -1px; color: #fff; margin-bottom: 40px; line-height: 1.2; }
+
+    /* ── FEATURES ── */
     .features { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 20px; }
     .feature { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; transition: all .2s; }
     .feature:hover { border-color: var(--border-hi); background: var(--surface2); transform: translateY(-3px); }
@@ -181,20 +234,64 @@
     .feat-title { font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 10px; }
     .feat-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
 
-    /* ── INSTALL ── */
-    .install-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: 16px; overflow: hidden; padding: 30px; }
-    .cmd-box { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #09090c; border: 1px solid var(--border); padding: 18px 24px; border-radius: 12px; margin-bottom: 20px; }
-    .cmd-text { font-family: var(--mono); font-size: 14px; color: #38bdf8; word-break: break-all; }
-    .dl-btn {
-      font-family: var(--font); font-size: 13px; font-weight: 700;
-      color: #000; background: var(--accent); border: none;
-      padding: 10px 22px; border-radius: 8px; cursor: pointer; flex-shrink: 0;
-      transition: all .15s; text-decoration: none; white-space: nowrap;
+    /* ── DOWNLOAD & METADATA SECTION ── */
+    .dl-card-grid {
+      display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
     }
-    .dl-btn:hover { opacity: .9; transform: translateY(-1px); }
+    .install-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: 16px; padding: 30px; }
+    .cmd-box { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #09090c; border: 1px solid var(--border); padding: 18px 24px; border-radius: 12px; margin-bottom: 20px; }
+    .dl-btn {
+      font-family: var(--font); font-size: 13.5px; font-weight: 700;
+      color: #000; background: var(--accent); border: none;
+      padding: 12px 24px; border-radius: 8px; cursor: pointer; flex-shrink: 0;
+      transition: all .15s; text-decoration: none; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .dl-btn:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 0 15px var(--accent-glow); }
+    
     .steps { list-style: none; display: flex; flex-direction: column; gap: 12px; }
     .steps li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--muted); }
     .step-n { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent-bd); color: var(--accent); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+
+    /* Metadata & Scan Cards */
+    .meta-side-box { display: flex; flex-direction: column; gap: 16px; }
+    .meta-card { background: var(--surface); border: 1px solid var(--border-hi); border-radius: 16px; padding: 22px; }
+    .meta-card-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .meta-list { list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; }
+    .meta-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .meta-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .meta-key { color: var(--muted); }
+    .meta-val { color: var(--text); font-weight: 600; font-family: var(--mono); font-size: 12.5px; }
+
+    .vt-scan-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; padding: 10px; margin-top: 10px; background: var(--surface3);
+      border: 1px solid var(--border-hi); color: var(--text); font-size: 13px; font-weight: 600;
+      border-radius: 8px; text-decoration: none; transition: all 0.15s;
+    }
+    .vt-scan-btn:hover { background: var(--surface2); border-color: var(--accent-bd); color: var(--accent); }
+
+    /* SmartScreen Notice */
+    .smartscreen-notice {
+      background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.25);
+      border-radius: 10px; padding: 14px 18px; margin-top: 20px;
+      font-size: 13px; color: #eab308; line-height: 1.5; display: flex; align-items: flex-start; gap: 10px;
+    }
+    .smartscreen-notice span { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── CHANGELOG ── */
+    .changelog-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; }
+    .changelog-ver { font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+    .changelog-ver span { font-size: 12px; color: var(--subtle); font-weight: 400; }
+    .changelog-list { list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--muted); }
+    .changelog-list li { display: flex; align-items: center; gap: 10px; }
+    .changelog-list li::before { content: '•'; color: var(--accent); font-weight: bold; }
+
+    /* ── FAQ ── */
+    .faq-grid { display: flex; flex-direction: column; gap: 14px; }
+    .faq-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; }
+    .faq-q { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+    .faq-a { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
     /* ── FOOTER ── */
     footer { border-top: 1px solid var(--border); padding: 40px 2rem; text-align: center; background: #050507; }
@@ -202,54 +299,93 @@
     .footer-text a { color: var(--accent); text-decoration: none; }
     .footer-text a:hover { text-decoration: underline; }
 
+    @media(max-width:850px){
+      .dl-card-grid { grid-template-columns: 1fr; }
+    }
     @media(max-width:640px){
       nav{padding:0 1rem}
       .nav-links{display:none}
-      .hero{padding:70px 1rem 40px}
+      .hero{padding:70px 1rem 30px}
       .gui-btn-grid{grid-template-columns:1fr}
       .cmd-box{flex-direction:column;align-items:flex-start}
-      .dl-btn{width:100%;text-align:center}
+      .dl-btn{width:100%;justify-content:center}
     }
   </style>
 </head>
 <body>
 
 <!-- NAV -->
-<nav>
+<nav aria-label="Main Navigation">
   <div class="nav-inner">
-    <a class="nav-logo" href="#">
-      <div class="nav-badge">⚡</div>PC Optimizer
+    <a class="nav-logo" href="#" aria-label="PC Optimizer Home">
+      <div class="nav-badge" installation-icon="true">⚡</div>PC Optimizer
     </a>
     <ul class="nav-links">
+      <li><a href="#trust">Overview</a></li>
       <li><a href="#preview">GUI App</a></li>
       <li><a href="#features">Features</a></li>
       <li><a href="#download">Download</a></li>
-      <li><a href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener">GitHub ↗</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener" aria-label="GitHub Repository (opens in new tab)">GitHub ↗</a></li>
     </ul>
     <a class="nav-cta" href="#download">Download App</a>
   </div>
 </nav>
 
 <!-- HERO -->
-<section class="hero">
-  <div class="hero-badge"><div class="pulse"></div> Modern Desktop App • v2.0</div>
-  <h1>No terminal needed.<br><span class="hl">Just double-click &amp; optimize.</span></h1>
+<section class="hero" aria-labelledby="hero-heading">
+  <div class="hero-badge"><div class="pulse" aria-hidden="true"></div> Modern Desktop App • v2.0</div>
+  <h1 id="hero-heading">Safe, simple performance tuning<br><span class="hl">for your Windows PC.</span></h1>
   <p class="hero-sub">
-    A beautiful desktop app for Windows. Monitor your PC Health Score, run 1-click safe cleanup,
-    toggle Gaming Mode, and schedule weekly maintenance automatically.
+    A clean desktop app for Windows 10 &amp; 11. Monitor your PC Health Score, run safe 1-click optimization,
+    toggle Gaming Mode, and schedule weekly maintenance automatically. Open source and free.
   </p>
   <div class="hero-btns">
-    <a class="btn-primary" href="/optimizer.exe">
+    <a class="btn-primary" href="/optimizer.exe" aria-label="Download optimizer.exe directly">
       ⬇ Download optimizer.exe
     </a>
-    <a class="btn-secondary" href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener">
+    <a class="btn-secondary" href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener" aria-label="View Source Code on GitHub (opens in new tab)">
       ⭐ View Source on GitHub
     </a>
   </div>
 </section>
 
-<!-- GUI PREVIEW MOCKUP -->
-<div class="app-preview-wrap" id="preview">
+<!-- TRUST PILLARS -->
+<section class="trust-section" id="trust" aria-label="Trust &amp; Compatibility">
+  <div class="trust-grid">
+    <div class="trust-card">
+      <div class="trust-icon" aria-hidden="true">✓</div>
+      <div>
+        <div class="trust-title">Open Source</div>
+        <div class="trust-desc">Transparent code licensed under MIT for security &amp; privacy.</div>
+      </div>
+    </div>
+    <div class="trust-card">
+      <div class="trust-icon" aria-hidden="true">✓</div>
+      <div>
+        <div class="trust-title">Standalone EXE</div>
+        <div class="trust-desc">Single executable file — no Python or setup required.</div>
+      </div>
+    </div>
+    <div class="trust-card">
+      <div class="trust-icon" aria-hidden="true">✓</div>
+      <div>
+        <div class="trust-title">Safe Optimization</div>
+        <div class="trust-desc">Designed with safe defaults and automatic System Restore points.</div>
+      </div>
+    </div>
+    <div class="trust-card">
+      <div class="trust-icon" aria-hidden="true">✓</div>
+      <div>
+        <div class="trust-title">Windows 10/11 Ready</div>
+        <div class="trust-desc">Native 64-bit application built specifically for Windows.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GUI PREVIEW INTERACTIVE DEMO -->
+<div class="app-preview-wrap" id="preview" aria-label="Desktop App Interface Preview">
   <div class="gui-card">
     <div class="gui-hdr">
       <div class="gui-title">⚡ PC Optimizer</div>
@@ -270,81 +406,180 @@
     </div>
 
     <!-- Main Button -->
-    <button class="gui-btn-main" onclick="simulateGuiClick()">
+    <button class="gui-btn-main" onclick="simulateGuiClick()" aria-label="Simulate 1-Click Optimization demo">
       🚀 Optimize My PC
     </button>
 
     <!-- Sub Buttons -->
     <div class="gui-btn-grid">
-      <div class="gui-btn-sub purple">🎮 Gaming Mode</div>
-      <div class="gui-btn-sub">↩ Restore Normal</div>
-      <div class="gui-btn-sub">⏰ Schedule Weekly</div>
+      <div class="gui-btn-sub purple" role="status">🎮 Gaming Mode</div>
+      <div class="gui-btn-sub" role="status">↩ Restore Normal</div>
+      <div class="gui-btn-sub" role="status">⏰ Schedule Weekly</div>
     </div>
 
     <!-- Log area -->
-    <div class="gui-log-box" id="mockLog">
+    <div class="gui-log-box" id="mockLog" aria-label="Activity Log Output">
       <div>Activity Log</div>
       <div style="color: #6b7280;">Last Run: Sunday 3:00 AM • Score: 58 → 84</div>
       <div style="color: #00e5a0; margin-top: 4px;">Ready. Click 'Optimize My PC' for 1-click safe cleanup.</div>
     </div>
   </div>
+
+  <!-- REAL SCREENSHOTS PLACEHOLDER AREA -->
+  <div class="screenshots-wrap">
+    <div class="screenshots-grid">
+      <!-- Screenshot 1 -->
+      <div class="screenshot-placeholder">
+        <span aria-hidden="true">🖼️</span>
+        <div>Desktop App Interface Screenshot</div>
+        <div style="font-size: 11px; opacity: 0.6;">(Screenshot placeholder 1)</div>
+      </div>
+      <!-- Screenshot 2 -->
+      <div class="screenshot-placeholder">
+        <span aria-hidden="true">📊</span>
+        <div>Health Score &amp; Optimization Log</div>
+        <div style="font-size: 11px; opacity: 0.6;">(Screenshot placeholder 2)</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- FEATURES -->
-<section class="section" id="features">
+<section class="section" id="features" aria-labelledby="features-heading">
   <div class="eyebrow">App Features</div>
-  <div class="section-title">Built for normal users. Powered by safe tuning.</div>
+  <div class="section-title" id="features-heading">Smart, targeted optimizations with safe defaults.</div>
   <div class="features">
     <div class="feature">
-      <div class="feat-icon">📊</div>
+      <div class="feat-icon" aria-hidden="true">📊</div>
       <div class="feat-title">Live PC Health Score</div>
-      <div class="feat-desc">Calculates your real-time system health score (0-100) based on RAM pressure, disk space, temp file size, telemetry, and startup items.</div>
+      <div class="feat-desc">Calculates your real-time system health score (0–100) based on RAM pressure, disk space, temp file size, telemetry, and startup items.</div>
     </div>
     <div class="feature">
-      <div class="feat-icon">🚀</div>
-      <div class="feat-title">1-Click Safe Cleanup</div>
-      <div class="feat-desc">Cleans temp files, flushes DNS, optimizes startup, disables telemetry, and tunes visual effects safely — with zero risk of system hangs.</div>
+      <div class="feat-icon" aria-hidden="true">🚀</div>
+      <div class="feat-title">Safe Cleanup Engine</div>
+      <div class="feat-desc">Cleans temp files, flushes DNS, optimizes startup, and disables telemetry safely — designed with safe defaults to prevent system hangs.</div>
     </div>
     <div class="feature">
-      <div class="feat-icon">🎮</div>
+      <div class="feat-icon" aria-hidden="true">🎮</div>
       <div class="feat-title">Gaming Mode</div>
-      <div class="feat-desc">Instantly switches power plan to High Performance and disables GameDVR background recording to prevent micro-stuttering while gaming.</div>
+      <div class="feat-desc">Switches power plan to High Performance and disables GameDVR background recording to prevent micro-stuttering while gaming.</div>
     </div>
     <div class="feature">
-      <div class="feat-icon">⏰</div>
+      <div class="feat-icon" aria-hidden="true">⏰</div>
       <div class="feat-title">Weekly Scheduler</div>
       <div class="feat-desc">One click sets up a native Windows Scheduled Task to keep your PC automatically optimized every Sunday at 3:00 AM.</div>
     </div>
     <div class="feature">
-      <div class="feat-icon">🛡️</div>
-      <div class="feat-title">100% Safe Guardrails</div>
-      <div class="feat-desc">No working set RAM flushing (no pagefile stuttering), no Superfetch disabling (apps launch fast), and creates a System Restore Point first.</div>
+      <div class="feat-icon" aria-hidden="true">🛡️</div>
+      <div class="feat-title">System Protection</div>
+      <div class="feat-desc">Creates a System Restore Point first, keeps Superfetch (SysMain) active for fast app launches, and avoids aggressive RAM flushes.</div>
     </div>
     <div class="feature">
-      <div class="feat-icon">📦</div>
-      <div class="feat-title">Standalone Windows .EXE</div>
-      <div class="feat-desc">No Python installation required. Double-click <code>optimizer.exe</code>, grant admin permission, and use the desktop app window.</div>
+      <div class="feat-icon" aria-hidden="true">📦</div>
+      <div class="feat-title">Standalone Executable</div>
+      <div class="feat-desc">No Python setup needed. Double-click <code>optimizer.exe</code>, grant admin permission, and use the desktop app window directly.</div>
     </div>
   </div>
 </section>
 
-<!-- DOWNLOAD SECTION -->
-<section class="section" id="download">
+<!-- DOWNLOAD & METADATA SECTION -->
+<section class="section" id="download" aria-labelledby="download-heading">
   <div class="eyebrow">Get Started</div>
-  <div class="section-title">Download PC Optimizer v2.0</div>
-  <div class="install-box">
-    <div class="cmd-box">
-      <div>
-        <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">optimizer.exe — Windows Desktop App</div>
-        <div style="font-size: 13px; color: var(--muted);">Version 2.0 • Standalone Executable • 100% Open Source</div>
+  <div class="section-title" id="download-heading">Download PC Optimizer</div>
+  
+  <div class="dl-card-grid">
+    <div class="install-box">
+      <div class="cmd-box">
+        <div>
+          <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">optimizer.exe — Windows Desktop App</div>
+          <div style="font-size: 13px; color: var(--muted);">Version 2.0 • Standalone Executable • Open Source</div>
+        </div>
+        <a class="dl-btn" href="/optimizer.exe" aria-label="Download optimizer.exe standalone executable">
+          ⬇ Download optimizer.exe
+        </a>
       </div>
-      <a class="dl-btn" href="/optimizer.exe">⬇ Download optimizer.exe</a>
+      
+      <ul class="steps">
+        <li><div class="step-n">1</div><span>Click <strong>Download optimizer.exe</strong> above to save the file.</span></li>
+        <li><div class="step-n">2</div><span>Double-click <strong>optimizer.exe</strong> — Windows will prompt for Administrator permission.</span></li>
+        <li><div class="step-n">3</div><span>The desktop application window opens with your PC Health Score and 1-Click buttons!</span></li>
+      </ul>
+
+      <!-- SmartScreen Notice -->
+      <div class="smartscreen-notice">
+        <span aria-hidden="true">ℹ️</span>
+        <div>Windows SmartScreen may display a warning because the application is not code signed yet. This is expected for many independent open-source applications.</div>
+      </div>
     </div>
-    <ul class="steps">
-      <li><div class="step-n">1</div><span>Click <strong>Download optimizer.exe</strong> above to save the file.</span></li>
-      <li><div class="step-n">2</div><span>Double-click <strong>optimizer.exe</strong> — Windows will prompt for Administrator permission.</span></li>
-      <li><div class="step-n">3</div><span>The desktop application window opens with your PC Health Score and 1-Click buttons!</span></li>
+
+    <!-- SIDEBAR METADATA & VIRUSTOTAL CARD -->
+    <div class="meta-side-box">
+      <div class="meta-card">
+        <div class="meta-card-title">File Details</div>
+        <ul class="meta-list">
+          <li class="meta-item"><span class="meta-key">Version</span><span class="meta-val">v2.0</span></li>
+          <li class="meta-item"><span class="meta-key">Platform</span><span class="meta-val">Windows 10/11</span></li>
+          <li class="meta-item"><span class="meta-key">File</span><span class="meta-val">optimizer.exe</span></li>
+          <li class="meta-item"><span class="meta-key">License</span><span class="meta-val">MIT</span></li>
+          <li class="meta-item"><span class="meta-key">Size</span><span class="meta-val">Coming Soon</span></li>
+        </ul>
+      </div>
+
+      <div class="meta-card">
+        <div class="meta-card-title">Security &amp; Verification</div>
+        <div style="font-size: 13px; color: var(--muted); margin-bottom: 10px;">
+          Scan report for release binaries.
+        </div>
+        <!-- Replace with actual VirusTotal URL -->
+        <a class="vt-scan-btn" href="#" target="_blank" rel="noopener" aria-label="View VirusTotal Scan Report (placeholder link)">
+          🛡️ View Scan
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CHANGELOG SECTION -->
+<section class="section" id="changelog" aria-labelledby="changelog-heading">
+  <div class="eyebrow">Updates</div>
+  <div class="section-title" id="changelog-heading">Changelog</div>
+  <div class="changelog-box">
+    <div class="changelog-ver">v2.0 <span>• Recent Release</span></div>
+    <ul class="changelog-list">
+      <li>Improved optimizer engine with safe default rules</li>
+      <li>New native desktop GUI app interface</li>
+      <li>Safer cleanup defaults to prevent disk thrashing</li>
+      <li>Automated weekly task scheduler integration</li>
+      <li>Restore normal mode improvements</li>
     </ul>
+  </div>
+</section>
+
+<!-- FAQ SECTION -->
+<section class="section" id="faq" aria-labelledby="faq-heading">
+  <div class="eyebrow">Questions &amp; Answers</div>
+  <div class="section-title" id="faq-heading">Frequently Asked Questions</div>
+  <div class="faq-grid">
+    <div class="faq-item">
+      <div class="faq-q">Is it safe to use on my PC?</div>
+      <div class="faq-a">Yes. PC Optimizer is designed with safe defaults. It automatically creates a Windows System Restore Point before making changes, avoids aggressive RAM flushes, and keeps essential system services untouched.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Do I need Python installed?</div>
+      <div class="faq-a">No. The downloadable <code>optimizer.exe</code> is a standalone Windows executable bundled with all necessary components. Simply double-click to run.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Does it work on Windows 11?</div>
+      <div class="faq-a">Yes. PC Optimizer is fully compatible with both 64-bit Windows 10 and Windows 11.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I undo changes made by the optimizer?</div>
+      <div class="faq-a">Yes. You can click "Restore Normal" to revert Gaming Mode settings, or use the native System Restore Point created prior to optimization.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Is it open source?</div>
+      <div class="faq-a">Yes. The full source code is publicly available on GitHub under the MIT license, allowing anyone to audit and verify its security.</div>
+    </div>
   </div>
 </section>
 
