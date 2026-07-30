@@ -182,7 +182,7 @@
     }
     .gui-hdr { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px; }
     .gui-title { font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-    .gui-ver { font-size: 12px; color: var(--accent); background: var(--accent-dim); border: 1px solid var(--accent-bd); padding: 3px 10px; border-radius: 100px; }
+    .gui-ver { font-size: 11.5px; font-weight: 600; color: var(--accent); background: var(--accent-dim); border: 1px solid var(--accent-bd); padding: 3px 10px; border-radius: 100px; }
     
     .gui-score-box { background: #09090d; border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
     .gui-score-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -197,7 +197,9 @@
       width: 100%; padding: 14px; background: var(--accent); color: #000;
       font-size: 15px; font-weight: 700; border-radius: 10px; border: none;
       cursor: pointer; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: opacity 0.2s;
     }
+    .gui-btn-main:disabled { opacity: 0.7; cursor: not-allowed; }
     .gui-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
     .gui-btn-sub {
       padding: 10px; background: #1f2430; color: #fff; font-size: 12px; font-weight: 600;
@@ -318,7 +320,7 @@
 <nav aria-label="Main Navigation">
   <div class="nav-inner">
     <a class="nav-logo" href="#" aria-label="PC Optimizer Home">
-      <div class="nav-badge" installation-icon="true">⚡</div>PC Optimizer
+      <div class="nav-badge" aria-hidden="true">⚡</div>PC Optimizer
     </a>
     <ul class="nav-links">
       <li><a href="#trust">Overview</a></li>
@@ -389,7 +391,7 @@
   <div class="gui-card">
     <div class="gui-hdr">
       <div class="gui-title">⚡ PC Optimizer</div>
-      <div class="gui-ver">v2.0 • Safe Tuning</div>
+      <div class="gui-ver">Interactive Demo • v2.0</div>
     </div>
     
     <!-- Health score bar -->
@@ -521,7 +523,7 @@
           <li class="meta-item"><span class="meta-key">Platform</span><span class="meta-val">Windows 10/11</span></li>
           <li class="meta-item"><span class="meta-key">File</span><span class="meta-val">optimizer.exe</span></li>
           <li class="meta-item"><span class="meta-key">License</span><span class="meta-val">MIT</span></li>
-          <li class="meta-item"><span class="meta-key">Size</span><span class="meta-val">Coming Soon</span></li>
+          <li class="meta-item"><span class="meta-key">Size</span><span class="meta-val">~11 MB</span></li>
         </ul>
       </div>
 
@@ -593,21 +595,37 @@
 </footer>
 
 <script>
+  let isDemoRunning = false;
   function simulateGuiClick() {
+    if (isDemoRunning) return;
+    isDemoRunning = true;
+
     const scoreVal = document.getElementById('mockScoreVal');
     const pill = document.getElementById('mockPill');
     const bar = document.getElementById('mockBarFill');
     const issues = document.getElementById('mockIssues');
     const log = document.getElementById('mockLog');
+    const btn = document.querySelector('.gui-btn-main');
 
-    log.innerHTML = `
-      <div>Activity Log</div>
-      <div style="color: #38bdf8;">[1/5] Creating System Restore Point...</div>
-      <div style="color: #38bdf8;">[2/5] Cleaning 4.6 GB temp files & caches...</div>
-      <div style="color: #38bdf8;">[3/5] Disabling telemetry & tuning startup...</div>
-      <div style="color: #38bdf8;">[4/5] Flushing DNS & network stack...</div>
-      <div style="color: #00e5a0; margin-top: 4px;">✔ Optimization Complete! Score improved to 92/100</div>
-    `;
+    btn.disabled = true;
+    btn.textContent = '⏳ Optimizing PC...';
+
+    log.innerHTML = `<div>Activity Log</div>`;
+
+    const steps = [
+      { delay: 400,  text: `<div style="color: #38bdf8;">[1/5] Creating System Restore Point...</div>` },
+      { delay: 1000, text: `<div style="color: #38bdf8;">[2/5] Cleaning 4.6 GB temp files &amp; caches...</div>` },
+      { delay: 1600, text: `<div style="color: #38bdf8;">[3/5] Disabling telemetry &amp; tuning startup...</div>` },
+      { delay: 2200, text: `<div style="color: #38bdf8;">[4/5] Flushing DNS &amp; network stack...</div>` },
+      { delay: 2700, text: `<div style="color: #00e5a0; margin-top: 4px;">✔ Optimization Complete! Score improved to 92/100</div>` }
+    ];
+
+    steps.forEach(step => {
+      setTimeout(() => {
+        log.innerHTML += step.text;
+        log.scrollTop = log.scrollHeight;
+      }, step.delay);
+    });
 
     setTimeout(() => {
       scoreVal.textContent = '92/100';
@@ -616,7 +634,10 @@
       bar.style.width = '92%';
       issues.style.color = '#00e5a0';
       issues.textContent = '✔ System health is optimal! All safe cleanups applied.';
-    }, 600);
+      btn.disabled = false;
+      btn.textContent = '🚀 Optimize My PC';
+      isDemoRunning = false;
+    }, 2850);
   }
 </script>
 </body>
