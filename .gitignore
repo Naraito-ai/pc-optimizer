@@ -1,9 +1,16 @@
+# Python & PyInstaller
+__pycache__/
+*.py[cod]
+*$py.class
 build/
 dist/
-__pycache__/
 *.spec
-*.pyc
-.vscode/
-.idea/
 
-.vercel
+# Vercel & Environment
+.vercel/
+.env
+*.tmp
+*.log
+
+# Workspace scratch
+scratch/
