@@ -1,6 +1,6 @@
 # ==============================================================================
 # PC Performance Optimizer - One-Line Installer & Runner (Option A)
-# Run via: iwr -useb https://raw.githubusercontent.com/USERNAME/pc-optimizer/main/install.ps1 | iex
+# Run via: iwr -useb https://raw.githubusercontent.com/Naraito-ai/pc-optimizer/main/install.ps1 | iex
 # ==============================================================================
 
 $ErrorActionPreference = "Stop"
