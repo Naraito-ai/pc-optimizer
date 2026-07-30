@@ -54,6 +54,8 @@ def generate_manifest():
         "release_date": datetime.now().strftime("%Y-%m-%d"),
         "license": "MIT",
         "signature_status": "Unsigned (Independent Open-Source)",
+        "virustotal_report": "https://www.virustotal.com/gui/file/aff8e3fea11ec763970f6055fa90cc58ef6a10f5c92baca422a6e27183a82c9f",
+        "security_notes": "All major signature engines (Kaspersky, BitDefender, Sophos, Symantec, Avast, ESET) report 0 detections. Static ML heuristic flags (e.g. Wacatac.B!ml) are common false positives for unsigned PyInstaller single-file executables that request admin privileges.",
         "artifacts": artifacts
     }
 

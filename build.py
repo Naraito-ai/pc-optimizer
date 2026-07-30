@@ -19,6 +19,7 @@ def build_executable():
     """Build the standalone .exe file using PyInstaller."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
     optimizer_script = os.path.join(script_dir, "optimizer.py")
+    version_file = os.path.join(script_dir, "version_info.txt")
 
     if not os.path.exists(optimizer_script):
         print(f"[X] Error: {optimizer_script} not found!")
@@ -37,9 +38,13 @@ def build_executable():
         "--windowed",
         "--uac-admin",
         "--name",
-        "optimizer",
-        optimizer_script
+        "optimizer"
     ]
+
+    if os.path.exists(version_file):
+        cmd.extend(["--version-file", version_file])
+
+    cmd.append(optimizer_script)
 
     print(f"Executing build command: {' '.join(cmd)}\n")
     

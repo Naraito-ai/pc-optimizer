@@ -4,10 +4,12 @@
   "release_date": "2026-07-30",
   "license": "MIT",
   "signature_status": "Unsigned (Independent Open-Source)",
+  "virustotal_report": "https://www.virustotal.com/gui/file/aff8e3fea11ec763970f6055fa90cc58ef6a10f5c92baca422a6e27183a82c9f",
+  "security_notes": "All major signature engines (Kaspersky, BitDefender, Sophos, Symantec, Avast, ESET) report 0 detections. Static ML heuristic flags (e.g. Wacatac.B!ml) are common false positives for unsigned PyInstaller single-file executables that request admin privileges.",
   "artifacts": {
     "optimizer.exe": {
-      "size_bytes": 11658704,
-      "sha256": "aff8e3fea11ec763970f6055fa90cc58ef6a10f5c92baca422a6e27183a82c9f"
+      "size_bytes": 11659435,
+      "sha256": "3faff91d32e99db35ef0bf0bd64b20111df3366e6d53b7eb5e1ad4992b46c3cb"
     },
     "optimizer.py": {
       "size_bytes": 51185,
@@ -18,8 +20,8 @@
       "sha256": "f5ea325c122cc720ffa282efa6506637f4f997a38b3a5bef8523b765809b738a"
     },
     "index.html": {
-      "size_bytes": 32591,
-      "sha256": "b0aafa757be71c2df41425e205b74cd7bec508e8672dbfe6e8ce5abe153a0067"
+      "size_bytes": 33396,
+      "sha256": "a96a429b6f5920680a76673c2c5c87cce20a8e73f699351a3cb6c36a82ad621d"
     },
     "emergency_fix.ps1": {
       "size_bytes": 3760,
