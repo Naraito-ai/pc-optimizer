@@ -4,3 +4,6 @@ requirements.txt
 dist/
 build/
 *.spec
+diag.ps1
+emergency_fix.ps1
+find_hog.ps1

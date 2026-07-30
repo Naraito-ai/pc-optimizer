@@ -7,12 +7,12 @@ import winreg
 import glob
 import argparse
 import subprocess
-from typing import List, Tuple, Dict, Any
+from typing import List, Dict, Any
 
-# Fix Unicode output on Windows terminals (CP1252 codec crashes on box-drawing chars)
-if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+# ── Unicode safety: prevent CP1252 crashes on Windows CMD ──────────────────
+if hasattr(sys.stdout, "reconfigure"):
     try:
-        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
 
@@ -21,54 +21,43 @@ try:
     from colorama import init, Fore, Style
     from tabulate import tabulate
 except ImportError:
-    print("Required packages missing. Please install dependencies using: pip install -r requirements.txt")
+    print("Required packages missing. Run: pip install -r requirements.txt")
     sys.exit(1)
 
-# Initialize colorama
 init(autoreset=True)
 
-# Parse command line arguments
+# ── Argument parsing ────────────────────────────────────────────────────────
 parser = argparse.ArgumentParser(description="Windows PC Performance Optimizer")
-parser.add_argument("--auto", "-a", action="store_true", help="Run optimizations automatically without interactive prompts")
-parser.add_argument("--interactive", "-i", action="store_true", help="Force interactive prompt mode")
+parser.add_argument("--auto", "-a", action="store_true",
+                    help="Run all safe optimizations automatically (no prompts)")
+parser.add_argument("--interactive", "-i", action="store_true",
+                    help="Force interactive prompt mode")
 args, _ = parser.parse_known_args()
 
-# AUTO_MODE is enabled by default for one-click behavior, unless explicitly set to --interactive
-AUTO_MODE = True if (args.auto or not args.interactive) else False
+# Default to AUTO unless --interactive is explicitly passed
+AUTO_MODE = not args.interactive
 
-# System critical process blacklist (Must never be terminated)
+# ── Constants ───────────────────────────────────────────────────────────────
 SYSTEM_CRITICAL_PROCESSES = {
     "svchost.exe", "lsass.exe", "csrss.exe", "winlogon.exe", "explorer.exe",
     "smss.exe", "services.exe", "system", "idle", "registry", "spoolsv.exe",
     "dwm.exe", "ctfmon.exe", "fontdrvhost.exe", "sihost.exe", "taskhostw.exe",
     "securityhealthservice.exe", "smartscreen.exe", "conhost.exe",
-    "memcompression", "vmmem", "vmmemwsl"
+    "memcompression", "vmmem", "vmmemwsl",
 }
 
-# Known bloatware / background processes to target
 BLOATWARE_PROCESSES = [
     "onedrive.exe", "ms-teams.exe", "teams.exe", "discord.exe", "cortana.exe",
     "searchapp.exe", "skype.exe", "yourphone.exe", "phone-link.exe",
-    "xboxstat.exe", "gamebar.exe"
+    "xboxstat.exe", "gamebar.exe",
 ]
 
-# Startup keywords to protect during auto mode
 STARTUP_PROTECTED_KEYWORDS = [
     "securityhealth", "realtek", "nvidia", "amd", "intel",
-    "antivirus", "defender", "bluetooth"
+    "antivirus", "defender", "bluetooth",
 ]
 
-def print_header():
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print(Fore.CYAN + Style.BRIGHT + "=" * 65)
-    print(Fore.CYAN + Style.BRIGHT + "       [+] WINDOWS PC PERFORMANCE OPTIMIZER [+]")
-    print(Fore.CYAN + Style.BRIGHT + "       Production-Ready System Tuning Tool")
-    if AUTO_MODE:
-        print(Fore.MAGENTA + Style.BRIGHT + "       MODE: AUTOMATIC ONE-CLICK ENGINE (--auto)")
-    else:
-        print(Fore.YELLOW + Style.BRIGHT + "       MODE: INTERACTIVE PROMPT ENGINE")
-    print(Fore.CYAN + Style.BRIGHT + "=" * 65 + "\n")
-
+# ── UAC / Admin helpers ─────────────────────────────────────────────────────
 def is_admin() -> bool:
     try:
         return ctypes.windll.shell32.IsUserAnAdmin() != 0
@@ -76,490 +65,500 @@ def is_admin() -> bool:
         return False
 
 def elevate_if_needed():
-    """If not running as admin, re-launch self with UAC elevation prompt."""
+    """If not admin, relaunch with UAC elevation prompt and exit current process."""
     if not is_admin():
-        # Re-launch the current executable (or script) with elevated privileges
         script = sys.executable
-        params = " ".join(sys.argv)
+        params  = " ".join(f'"{a}"' for a in sys.argv)
         try:
             ret = ctypes.windll.shell32.ShellExecuteW(
                 None, "runas", script, params, None, 1
             )
             if ret <= 32:
-                # ShellExecute failed (user cancelled UAC or error)
-                import tkinter as tk
-                from tkinter import messagebox
-                root = tk.Tk()
-                root.withdraw()
-                messagebox.showerror(
-                    "Admin Required",
-                    "This tool requires Administrator privileges.\n"
-                    "Please right-click the .exe and choose 'Run as administrator'."
-                )
+                # UAC was cancelled or failed — show a message box
+                try:
+                    import tkinter as tk
+                    from tkinter import messagebox
+                    root = tk.Tk(); root.withdraw()
+                    messagebox.showerror(
+                        "Admin Required",
+                        "This tool requires Administrator privileges.\n"
+                        "Right-click the .exe and choose 'Run as administrator'."
+                    )
+                except Exception:
+                    pass
         except Exception:
             pass
-        sys.exit(0)  # Exit the non-elevated instance
+        sys.exit(0)
 
 def check_admin_privileges():
-    elevate_if_needed()  # Will UAC-prompt and relaunch if not admin
+    elevate_if_needed()   # Triggers UAC and relaunches; only continues if already admin
 
-def print_step_start(step_name: str):
-    print(Fore.WHITE + Style.BRIGHT + f"\n[RUNNING] {step_name}...")
+# ── UI helpers ──────────────────────────────────────────────────────────────
+def print_header():
+    os.system("cls")
+    print(Fore.CYAN + Style.BRIGHT + "=" * 65)
+    print(Fore.CYAN + Style.BRIGHT + "       [+] WINDOWS PC PERFORMANCE OPTIMIZER [+]")
+    print(Fore.CYAN + Style.BRIGHT + "       Production-Ready System Tuning Tool")
+    mode_label = "AUTOMATIC (--auto)" if AUTO_MODE else "INTERACTIVE"
+    mode_color = Fore.MAGENTA if AUTO_MODE else Fore.YELLOW
+    print(mode_color + Style.BRIGHT + f"       MODE: {mode_label}")
+    print(Fore.CYAN + Style.BRIGHT + "=" * 65 + "\n")
 
-def print_step_done(step_name: str, details: str = ""):
-    extra = f" ({details})" if details else ""
-    print(Fore.GREEN + Style.BRIGHT + f"[DONE] {step_name}{extra}")
+def print_step_start(name: str):
+    print(Fore.WHITE + Style.BRIGHT + f"\n[RUNNING] {name}...")
 
-def print_step_skipped(step_name: str, reason: str = ""):
+def print_step_done(name: str, detail: str = ""):
+    extra = f" ({detail})" if detail else ""
+    print(Fore.GREEN + Style.BRIGHT + f"[DONE] {name}{extra}")
+
+def print_step_skipped(name: str, reason: str = ""):
     extra = f" ({reason})" if reason else ""
-    print(Fore.YELLOW + Style.BRIGHT + f"[SKIPPED] {step_name}{extra}")
+    print(Fore.YELLOW + Style.BRIGHT + f"[SKIPPED] {name}{extra}")
 
-def print_auto_action(action_desc: str):
-    print(Fore.MAGENTA + Style.BRIGHT + f"  [AUTO] {action_desc}")
+def print_auto(msg: str):
+    print(Fore.MAGENTA + Style.BRIGHT + f"  [AUTO] {msg}")
 
-def print_warning(msg: str):
+def print_warn(msg: str):
     print(Fore.YELLOW + f"[WARNING] {msg}")
 
-def print_error(msg: str):
+def print_err(msg: str):
     print(Fore.RED + f"[ERROR] {msg}")
 
-def ask_user_yn(prompt_text: str, default_yes: bool = False) -> bool:
+def ask_yn(prompt: str, default_yes: bool = False) -> bool:
+    """Always returns True in AUTO_MODE without prompting."""
     if AUTO_MODE:
         return True
-    default_str = " [Y/n]: " if default_yes else " [y/N]: "
+    suffix = " [Y/n]: " if default_yes else " [y/N]: "
     try:
-        choice = input(Fore.LIGHTWHITE_EX + prompt_text + default_str).strip().lower()
+        choice = input(Fore.LIGHTWHITE_EX + prompt + suffix).strip().lower()
         if not choice:
             return default_yes
-        return choice.startswith('y')
+        return choice.startswith("y")
     except (KeyboardInterrupt, EOFError):
         print()
         return False
 
-def create_system_restore_point():
+# ── System metrics ──────────────────────────────────────────────────────────
+def get_metrics() -> Dict[str, Any]:
+    ram  = psutil.virtual_memory()
+    disk = psutil.disk_usage("C:\\")
+    return {
+        "ram_pct":      ram.percent,
+        "ram_used_gb":  ram.used  / (1024 ** 3),
+        "ram_total_gb": ram.total / (1024 ** 3),
+        "cpu_pct":      psutil.cpu_percent(interval=0.5),
+        "disk_free_gb": disk.free  / (1024 ** 3),
+        "disk_total_gb":disk.total / (1024 ** 3),
+    }
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 0 — System Restore Point
+# ══════════════════════════════════════════════════════════════════════════════
+def create_restore_point():
     print_step_start("Creating System Restore Point")
     try:
-        ps_cmd = "Checkpoint-Computer -Description 'Before PC Optimizer' -RestorePointType 'MODIFY_SETTINGS'"
+        cmd = ("Checkpoint-Computer "
+               "-Description 'Before_PC_Optimizer' "
+               "-RestorePointType 'MODIFY_SETTINGS'")
         res = subprocess.run(
-            ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_cmd],
-            capture_output=True,
-            text=True
+            ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+             "-Command", cmd],
+            capture_output=True, text=True
         )
         if res.returncode == 0:
             print_step_done("System Restore Point", "Created successfully")
         else:
-            print_warning("Could not create restore point (System Restore may be disabled or limited by Windows policy).")
-            print_step_skipped("System Restore Point", "Bypassed")
+            print_warn("Could not create restore point (may be rate-limited by Windows).")
+            print_step_skipped("System Restore Point")
     except Exception as e:
-        print_warning(f"Failed to execute restore point creation: {e}")
+        print_warn(f"Restore point error: {e}")
         print_step_skipped("System Restore Point")
 
-def get_system_metrics() -> Dict[str, Any]:
-    ram = psutil.virtual_memory()
-    cpu_pct = psutil.cpu_percent(interval=0.5)
-    disk = psutil.disk_usage("C:\\")
-    return {
-        "ram_pct": ram.percent,
-        "ram_used_gb": ram.used / (1024 ** 3),
-        "ram_total_gb": ram.total / (1024 ** 3),
-        "cpu_pct": cpu_pct,
-        "disk_free_gb": disk.free / (1024 ** 3),
-        "disk_total_gb": disk.total / (1024 ** 3)
-    }
-
-# ----------------------------------------------------
-# 1. MEMORY CLEANUP
-# ----------------------------------------------------
-def flush_standby_memory():
-    """Skip working set flush — EmptyWorkingSet pushes RAM to pagefile causing disk I/O hangs."""
-    print_step_start("RAM Optimization")
-    print_auto_action("Skipped working set flush (causes pagefile I/O and system hangs on HDD/low-RAM systems)")
-    print_step_done("RAM Optimization", "Bloatware scan completed — working set flush skipped for stability")
-
-def kill_bloatware_and_heavy_apps():
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 1 — Bloatware process killer  (NO working-set flush)
+# ══════════════════════════════════════════════════════════════════════════════
+def kill_bloatware():
     print_step_start("Bloatware & Non-Essential Process Optimizer")
-    
-    # Part A: Target bloatware automatically
-    terminated_bloat = []
-    for proc in psutil.process_iter(['pid', 'name']):
+    killed: List[str] = []
+
+    # Auto-kill known bloatware
+    for proc in psutil.process_iter(["pid", "name"]):
         try:
-            pname = (proc.info['name'] or '').lower()
-            if pname in BLOATWARE_PROCESSES:
+            name = (proc.info["name"] or "").lower()
+            if name in BLOATWARE_PROCESSES:
                 proc.kill()
-                terminated_bloat.append(pname)
+                killed.append(name)
         except Exception:
             continue
 
-    if terminated_bloat:
-        bloat_str = ", ".join(set(terminated_bloat))
+    if killed:
+        names = ", ".join(sorted(set(killed)))
         if AUTO_MODE:
-            print_auto_action(f"Terminated bloatware processes: {bloat_str}")
+            print_auto(f"Terminated bloatware: {names}")
         else:
-            print(Fore.GREEN + f"  -> Terminated bloatware processes: {bloat_str}")
+            print(Fore.GREEN + f"  -> Terminated: {names}")
 
-    # Part B: Non-system processes using > 200MB RAM
-    killed_count = 0
+    # Interactive: ask about heavy user processes
     if not AUTO_MODE:
-        print(Fore.CYAN + "\n  Checking non-system processes consuming > 200MB RAM...")
-        heavy_procs = []
         current_pid = os.getpid()
-
-        for proc in psutil.process_iter(['pid', 'name', 'memory_info']):
+        heavy = []
+        for proc in psutil.process_iter(["pid", "name", "memory_info"]):
             try:
-                pid = proc.info['pid']
-                pname = proc.info['name'] or 'Unknown'
-                pname_lower = pname.lower()
-                
-                if pid == current_pid or pid <= 4 or pname_lower in SYSTEM_CRITICAL_PROCESSES:
+                p   = proc.info
+                pid = p["pid"]
+                nm  = p["name"] or "Unknown"
+                if pid == current_pid or pid <= 4 or nm.lower() in SYSTEM_CRITICAL_PROCESSES:
                     continue
-                
-                rss_mb = proc.info['memory_info'].rss / (1024 * 1024)
-                if rss_mb > 200:
-                    heavy_procs.append((pid, pname, rss_mb))
+                mb = p["memory_info"].rss / (1024 * 1024)
+                if mb > 200:
+                    heavy.append((pid, nm, mb))
             except Exception:
                 continue
-
-        if heavy_procs:
-            print(Fore.YELLOW + f"  Found {len(heavy_procs)} heavy process(es) using > 200MB RAM:")
-            for pid, name, rss in heavy_procs:
-                if ask_user_yn(f"    Terminate '{name}' (PID: {pid}, RAM: {rss:.1f} MB)?"):
+        if heavy:
+            print(Fore.YELLOW + f"\n  {len(heavy)} process(es) using >200 MB RAM:")
+            for pid, nm, mb in heavy:
+                if ask_yn(f"    Terminate '{nm}' (PID {pid}, {mb:.0f} MB)?"):
                     try:
-                        p = psutil.Process(pid)
-                        p.kill()
-                        killed_count += 1
-                        print(Fore.GREEN + f"    [OK] Terminated {name}")
+                        psutil.Process(pid).kill()
+                        print(Fore.GREEN + f"    [OK] Terminated {nm}")
                     except Exception as e:
-                        print_error(f"    Could not terminate {name}: {e}")
-        else:
-            print(Fore.WHITE + "  No non-system processes found using > 200MB RAM.")
+                        print_err(f"    Could not terminate {nm}: {e}")
     else:
-        print_auto_action("Skipped killing active user applications (>200MB RAM) to preserve open user work.")
+        print_auto("Skipped killing user apps >200 MB (preserves open work)")
 
-    print_step_done("Bloatware & Process Cleanup", f"Killed {len(set(terminated_bloat)) + killed_count} process(es)")
+    print_step_done("Bloatware & Process Optimizer",
+                    f"{len(set(killed))} bloatware process(es) removed")
 
-# ----------------------------------------------------
-# 2. TEMP FILE CLEANUP
-# ----------------------------------------------------
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 2 — Temp file & cache cleanup
+# ══════════════════════════════════════════════════════════════════════════════
 def clean_temp_files() -> float:
     print_step_start("Temporary Files & Cache Cleanup")
+    local   = os.environ.get("LOCALAPPDATA", "")
+    user_tmp= os.environ.get("TEMP", "")
+    targets = [
+        user_tmp,
+        r"C:\Windows\Temp",
+        r"C:\Windows\Prefetch",
+        r"C:\Windows\SoftwareDistribution\Download",
+    ]
+    if local:
+        targets += [
+            os.path.join(local, r"Google\Chrome\User Data\Default\Cache"),
+            os.path.join(local, r"Google\Chrome\User Data\Default\Code Cache"),
+            os.path.join(local, r"Microsoft\Edge\User Data\Default\Cache"),
+            os.path.join(local, r"Microsoft\Edge\User Data\Default\Code Cache"),
+        ]
+        targets += glob.glob(
+            os.path.join(local, r"Mozilla\Firefox\Profiles\*\cache2")
+        )
+
     bytes_freed = 0
-
-    # Define targets
-    local_appdata = os.environ.get('LOCALAPPDATA', '')
-    user_temp = os.environ.get('TEMP', '')
-    win_temp = r"C:\Windows\Temp"
-    prefetch = r"C:\Windows\Prefetch"
-    wu_cache = r"C:\Windows\SoftwareDistribution\Download"
-
-    temp_dirs = [user_temp, win_temp, prefetch, wu_cache]
-
-    # Safe Browser Caches
-    if local_appdata:
-        temp_dirs.extend([
-            os.path.join(local_appdata, r"Google\Chrome\User Data\Default\Cache"),
-            os.path.join(local_appdata, r"Google\Chrome\User Data\Default\Code Cache"),
-            os.path.join(local_appdata, r"Microsoft\Edge\User Data\Default\Cache"),
-            os.path.join(local_appdata, r"Microsoft\Edge\User Data\Default\Code Cache"),
-        ])
-        
-        # Firefox Profile Caches
-        ff_profiles = glob.glob(os.path.join(local_appdata, r"Mozilla\Firefox\Profiles\*\cache2"))
-        temp_dirs.extend(ff_profiles)
-
-    for target_dir in temp_dirs:
-        if not target_dir or not os.path.exists(target_dir):
+    for d in targets:
+        if not d or not os.path.exists(d):
             continue
-
         if AUTO_MODE:
-            print_auto_action(f"Cleaning safe directory: {target_dir}")
+            print_auto(f"Cleaning: {d}")
         else:
-            print(Fore.WHITE + f"  Cleaning: {target_dir}")
-            
-        for root, dirs, files in os.walk(target_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
+            print(Fore.WHITE + f"  Cleaning: {d}")
+        for root, dirs, files in os.walk(d):
+            for f in files:
+                fp = os.path.join(root, f)
                 try:
-                    size = os.path.getsize(file_path)
-                    os.remove(file_path)
-                    bytes_freed += size
+                    bytes_freed += os.path.getsize(fp)
+                    os.remove(fp)
+                except Exception:
+                    pass
+            for sd in dirs:
+                try:
+                    shutil.rmtree(os.path.join(root, sd), ignore_errors=True)
                 except Exception:
                     pass
 
-            for d in dirs:
-                dir_path = os.path.join(root, d)
-                try:
-                    shutil.rmtree(dir_path, ignore_errors=True)
-                except Exception:
-                    pass
+    mb = bytes_freed / (1024 ** 2)
+    gb = bytes_freed / (1024 ** 3)
+    freed_str = f"{gb:.2f} GB" if gb >= 1.0 else f"{mb:.1f} MB"
+    print_step_done("Temp & Cache Cleanup", f"Freed {freed_str}")
+    return mb
 
-    mb_freed = bytes_freed / (1024 * 1024)
-    gb_freed = bytes_freed / (1024 ** 3)
-    freed_str = f"{gb_freed:.2f} GB" if gb_freed >= 1.0 else f"{mb_freed:.1f} MB"
-    print_step_done("Temporary Files & Cache Cleanup", f"Freed {freed_str}")
-    return mb_freed
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 3 — Power & visual effects  (BALANCED plan — no High Performance)
+# ══════════════════════════════════════════════════════════════════════════════
+def optimize_power_and_visuals():
+    print_step_start("Power Plan & Visual Effects Optimization")
 
-# ----------------------------------------------------
-# 3. CPU & POWER OPTIMIZATION
-# ----------------------------------------------------
-def optimize_cpu_and_power():
-    print_step_start("CPU & Power Plan Optimization")
-
-    # 1. Switch to Balanced power plan (safe for all devices including laptops)
-    # NOTE: High Performance forces CPU to 100% clock speed constantly, causing
-    # excessive heat and thermal throttling — which actually makes laptops SLOWER.
-    # Balanced boosts when needed and scales back when idle — best for all devices.
+    # BALANCED — safe for laptops and desktops.
+    # High Performance forces CPU to 100% clock speed → heat → throttle → lag.
     try:
-        balanced_guid = "SCHEME_BALANCED"
-        subprocess.run(["powercfg", "/setactive", balanced_guid], check=True, capture_output=True)
+        subprocess.run(["powercfg", "/setactive", "SCHEME_BALANCED"],
+                       check=True, capture_output=True)
         if AUTO_MODE:
-            print_auto_action("Power plan set to Balanced (safe for all devices — prevents overheating)")
+            print_auto("Power plan set to Balanced (prevents CPU overheating)")
         else:
-            print(Fore.GREEN + "  [OK] Windows Power Plan set to 'Balanced' (recommended for laptops & desktops)")
+            print(Fore.GREEN + "  [OK] Power plan: Balanced")
     except Exception as e:
-        print_warning(f"Could not set Balanced power plan: {e}")
+        print_warn(f"Could not set Balanced plan: {e}")
 
-    # 2. Disable Visual Effects (Animations & Effects)
-    if ask_user_yn("  Optimize Windows visual effects for best performance?", default_yes=True):
+    # Visual effects → "Adjust for best performance"
+    if ask_yn("  Optimize Windows visual effects for performance?", default_yes=True):
         try:
-            key_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects"
-            with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path) as key:
-                winreg.SetValueEx(key, "VisualFXSetting", 0, winreg.REG_DWORD, 2)
+            with winreg.CreateKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects"
+            ) as k:
+                winreg.SetValueEx(k, "VisualFXSetting", 0, winreg.REG_DWORD, 2)
 
-            desktop_key = r"Control Panel\Desktop"
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, desktop_key, 0, winreg.KEY_SET_VALUE) as key:
-                winreg.SetValueEx(key, "MinAnimate", 0, winreg.REG_SZ, "0")
+            with winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Control Panel\Desktop", 0, winreg.KEY_SET_VALUE
+            ) as k:
+                winreg.SetValueEx(k, "MinAnimate", 0, winreg.REG_SZ, "0")
 
             SPI_SETANIMATION = 0x0043
             class ANIMATIONINFO(ctypes.Structure):
                 _fields_ = [("cbSize", ctypes.c_uint), ("iMinAnimate", ctypes.c_int)]
-            
-            anim = ANIMATIONINFO(cbSize=ctypes.sizeof(ANIMATIONINFO), iMinAnimate=0)
-            ctypes.windll.user32.SystemParametersInfoW(SPI_SETANIMATION, ctypes.sizeof(ANIMATIONINFO), ctypes.byref(anim), 3)
-
+            ai = ANIMATIONINFO(ctypes.sizeof(ANIMATIONINFO), 0)
+            ctypes.windll.user32.SystemParametersInfoW(
+                SPI_SETANIMATION, ctypes.sizeof(ANIMATIONINFO), ctypes.byref(ai), 3
+            )
             if AUTO_MODE:
-                print_auto_action("Visual effects optimized for maximum performance")
+                print_auto("Visual effects optimized for maximum performance")
             else:
-                print(Fore.GREEN + "  [OK] Visual effects optimized for maximum performance")
+                print(Fore.GREEN + "  [OK] Visual effects optimized")
         except Exception as e:
-            print_warning(f"Could not adjust visual effects settings: {e}")
+            print_warn(f"Could not adjust visual effects: {e}")
 
-    print_step_done("CPU & Power Plan Optimization")
+    print_step_done("Power Plan & Visual Effects")
 
-# ----------------------------------------------------
-# 4. STARTUP PROGRAM MANAGER
-# ----------------------------------------------------
-def manage_startup_programs():
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 4 — Startup program manager
+# ══════════════════════════════════════════════════════════════════════════════
+def manage_startup():
     print_step_start("Startup Program Manager")
-    
     locations = [
-        (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", "HKCU Run"),
-        (winreg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\Run", "HKLM Run")
+        (winreg.HKEY_CURRENT_USER,
+         r"Software\Microsoft\Windows\CurrentVersion\Run", "HKCU"),
+        (winreg.HKEY_LOCAL_MACHINE,
+         r"Software\Microsoft\Windows\CurrentVersion\Run", "HKLM"),
     ]
-
-    items_found = []
-    for root, key_path, name_label in locations:
+    items = []
+    for root, path, label in locations:
         try:
-            with winreg.OpenKey(root, key_path, 0, winreg.KEY_READ) as key:
-                index = 0
+            with winreg.OpenKey(root, path, 0, winreg.KEY_READ) as k:
+                idx = 0
                 while True:
                     try:
-                        val_name, val_data, _ = winreg.EnumValue(key, index)
-                        items_found.append((root, key_path, name_label, val_name, val_data))
-                        index += 1
+                        name, data, _ = winreg.EnumValue(k, idx)
+                        items.append((root, path, label, name, data))
+                        idx += 1
                     except OSError:
                         break
         except Exception:
             continue
 
-    if not items_found:
+    if not items:
         print(Fore.WHITE + "  No registry startup items found.")
-        print_step_done("Startup Program Manager", "0 items processed")
+        print_step_done("Startup Manager", "0 items processed")
         return
 
-    print(Fore.CYAN + f"  Found {len(items_found)} startup program(s) in registry:\n")
-    disabled_count = 0
-
-    for root, key_path, label, name, command in items_found:
-        name_lower = name.lower()
-        cmd_lower = command.lower()
-
-        # Check if item contains any protected keywords
-        is_protected = any(kw in name_lower or kw in cmd_lower for kw in STARTUP_PROTECTED_KEYWORDS)
-
+    print(Fore.CYAN + f"  Found {len(items)} startup item(s)\n")
+    disabled = 0
+    for root, path, label, name, cmd in items:
+        name_l = name.lower()
+        cmd_l  = cmd.lower()
+        protected = any(
+            kw in name_l or kw in cmd_l for kw in STARTUP_PROTECTED_KEYWORDS
+        )
         if AUTO_MODE:
-            if is_protected:
-                print_auto_action(f"Kept protected startup item '{name}'")
+            if protected:
+                print_auto(f"Kept protected startup item: '{name}'")
             else:
                 try:
-                    with winreg.OpenKey(root, key_path, 0, winreg.KEY_SET_VALUE) as key:
-                        winreg.DeleteValue(key, name)
-                    disabled_count += 1
-                    print_auto_action(f"Disabled non-essential startup item '{name}'")
+                    with winreg.OpenKey(root, path, 0, winreg.KEY_SET_VALUE) as k:
+                        winreg.DeleteValue(k, name)
+                    disabled += 1
+                    print_auto(f"Disabled non-essential startup item: '{name}'")
                 except Exception as e:
-                    print_error(f"  Failed to remove startup item {name}: {e}")
+                    print_err(f"  Could not remove '{name}': {e}")
         else:
-            print(Fore.WHITE + f"  * [{label}] {Fore.YELLOW}{name}{Fore.WHITE} -> {command[:70]}")
-            if ask_user_yn(f"    Disable/Remove '{name}' from startup?"):
+            print(Fore.WHITE + f"  [{label}] {Fore.YELLOW}{name}{Fore.WHITE} -> {cmd[:70]}")
+            if ask_yn(f"    Disable '{name}' from startup?"):
                 try:
-                    with winreg.OpenKey(root, key_path, 0, winreg.KEY_SET_VALUE) as key:
-                        winreg.DeleteValue(key, name)
-                    disabled_count += 1
-                    print(Fore.GREEN + f"    [OK] Disabled startup item: {name}")
+                    with winreg.OpenKey(root, path, 0, winreg.KEY_SET_VALUE) as k:
+                        winreg.DeleteValue(k, name)
+                    disabled += 1
+                    print(Fore.GREEN + f"    [OK] Disabled: {name}")
                 except Exception as e:
-                    print_error(f"    Failed to remove {name}: {e}")
+                    print_err(f"    Failed: {e}")
 
-    print_step_done("Startup Program Manager", f"Disabled {disabled_count} program(s)")
+    print_step_done("Startup Manager", f"{disabled} item(s) disabled")
 
-# ----------------------------------------------------
-# 5. SERVICES OPTIMIZER
-# ----------------------------------------------------
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 5 — Windows services optimizer
+#          SysMain is intentionally NOT in this list.
+#          Disabling Superfetch causes cold-disk app launches → lag.
+# ══════════════════════════════════════════════════════════════════════════════
 def optimize_services():
     print_step_start("Windows Services Optimizer")
 
-    # Services list: (service_name, display_name, reason, allow_auto)
-    target_services = [
-        # SysMain removed from auto-disable: it prefetches apps into RAM — disabling it makes
-        # every app launch slower and causes disk thrashing after reboots.
-        ("DiagTrack", "Connected User Experiences and Telemetry", "Disables background Windows telemetry data collection", True),
-        ("WSearch", "Windows Search Indexer", "Disables file search indexing to reduce disk/CPU usage", True),
-        ("PrintSpooler", "Print Spooler", "Only needed if you use a printer", False)
+    # allow_auto=True  → disabled in --auto mode
+    # allow_auto=False → skipped in --auto mode (needs manual confirmation)
+    services = [
+        ("DiagTrack",    "Connected User Experiences & Telemetry",
+         "Background Windows telemetry — safe to disable", True),
+        ("WSearch",      "Windows Search Indexer",
+         "File indexing — reduces background disk/CPU", True),
+        ("PrintSpooler", "Print Spooler",
+         "Only needed if you print documents", False),
     ]
 
-    disabled_services = 0
-    for service_name, display_name, reason, allow_auto in target_services:
+    disabled = 0
+    for svc, display, reason, allow_auto in services:
         if AUTO_MODE:
             if not allow_auto:
-                print_auto_action(f"Skipped '{display_name}' service in --auto mode (requires manual confirmation)")
-                print_step_skipped(display_name, "Skipped in auto mode")
+                print_auto(f"Skipped '{display}' (manual confirmation required)")
+                print_step_skipped(display, "skipped in auto mode")
                 continue
-            
             try:
-                subprocess.run(["sc", "stop", service_name], capture_output=True, text=True)
-                res = subprocess.run(["sc", "config", service_name, "start=disabled"], capture_output=True, text=True)
+                subprocess.run(["sc", "stop",   svc], capture_output=True)
+                res = subprocess.run(
+                    ["sc", "config", svc, "start=disabled"],
+                    capture_output=True, text=True
+                )
                 if res.returncode == 0:
-                    print_auto_action(f"Stopped and disabled service '{display_name}'")
-                    disabled_services += 1
+                    print_auto(f"Stopped & disabled: '{display}'")
+                    disabled += 1
                 else:
-                    print_warning(f"Could not disable {display_name}: {res.stderr.strip()}")
+                    print_warn(f"Could not disable {display}: {res.stderr.strip()}")
             except Exception as e:
-                print_error(f"Failed to modify service {service_name}: {e}")
+                print_err(f"Service error ({svc}): {e}")
         else:
-            prompt = f"Disable service '{display_name}' ({reason})?"
-            if ask_user_yn(f"  {prompt}"):
+            if ask_yn(f"  Disable '{display}' ({reason})?"):
                 try:
-                    subprocess.run(["sc", "stop", service_name], capture_output=True, text=True)
-                    res = subprocess.run(["sc", "config", service_name, "start=disabled"], capture_output=True, text=True)
+                    subprocess.run(["sc", "stop",   svc], capture_output=True)
+                    res = subprocess.run(
+                        ["sc", "config", svc, "start=disabled"],
+                        capture_output=True, text=True
+                    )
                     if res.returncode == 0:
-                        print(Fore.GREEN + f"  [OK] Stopped and disabled service: {display_name}")
-                        disabled_services += 1
+                        print(Fore.GREEN + f"  [OK] Disabled: {display}")
+                        disabled += 1
                     else:
-                        print_warning(f"Could not disable {display_name}: {res.stderr.strip()}")
+                        print_warn(f"Could not disable {display}")
                 except Exception as e:
-                    print_error(f"Failed to modify service {service_name}: {e}")
+                    print_err(f"Failed ({svc}): {e}")
             else:
-                print_step_skipped(display_name, "Kept enabled by user")
+                print_step_skipped(display, "kept by user")
 
-    print_step_done("Windows Services Optimizer", f"{disabled_services} service(s) disabled")
+    print_step_done("Services Optimizer", f"{disabled} service(s) disabled")
 
-# ----------------------------------------------------
-# 6. NETWORK TWEAKS
-# ----------------------------------------------------
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 6 — Network tweaks
+# ══════════════════════════════════════════════════════════════════════════════
 def optimize_network():
     print_step_start("Network & TCP Stack Tweaks")
-
-    net_commands = [
-        ("Flushing DNS Cache", ["ipconfig", "/flushdns"]),
-        ("Resetting Winsock Catalog", ["netsh", "winsock", "reset"]),
-        ("Resetting IP Stack", ["netsh", "int", "ip", "reset"]),
-        ("Setting TCP Auto-Tuning to Normal", ["netsh", "int", "tcp", "set", "global", "autotuninglevel=normal"])
+    cmds = [
+        ("Flush DNS Cache",            ["ipconfig", "/flushdns"]),
+        ("Reset Winsock Catalog",      ["netsh", "winsock", "reset"]),
+        ("Reset IP Stack",             ["netsh", "int", "ip", "reset"]),
+        ("Set TCP Auto-Tuning Normal", ["netsh", "int", "tcp", "set",
+                                        "global", "autotuninglevel=normal"]),
     ]
-
-    for label, cmd in net_commands:
+    for label, cmd in cmds:
         try:
             if AUTO_MODE:
-                print_auto_action(f"Executing network tweak: {' '.join(cmd)}")
+                print_auto(f"Running: {' '.join(cmd)}")
             else:
-                print(Fore.WHITE + f"  Executing: {' '.join(cmd)}")
-            
+                print(Fore.WHITE + f"  Running: {' '.join(cmd)}")
             res = subprocess.run(cmd, capture_output=True, text=True)
+            status = "OK" if res.returncode == 0 else "notice"
+            detail = res.stdout.strip() or res.stderr.strip()
             if res.returncode == 0:
                 if AUTO_MODE:
-                    print_auto_action(f"{label} completed successfully")
+                    print_auto(f"{label}: done")
                 else:
-                    print(Fore.GREEN + f"  [OK] {label} succeeded")
+                    print(Fore.GREEN + f"  [OK] {label}")
             else:
-                print_warning(f"{label} notice: {res.stdout.strip() or res.stderr.strip()}")
+                print_warn(f"{label} {status}: {detail[:120]}")
         except Exception as e:
-            print_error(f"Command failed ({' '.join(cmd)}): {e}")
+            print_err(f"{label} failed: {e}")
 
     print_step_done("Network & TCP Stack Tweaks")
 
-# ----------------------------------------------------
-# MAIN EXECUTION FLOW
-# ----------------------------------------------------
+# ══════════════════════════════════════════════════════════════════════════════
+# BEFORE / AFTER REPORT
+# ══════════════════════════════════════════════════════════════════════════════
+def print_report(before: Dict, after: Dict, mb_freed: float):
+    print("\n" + Fore.CYAN + Style.BRIGHT + "=" * 65)
+    print(Fore.CYAN + Style.BRIGHT + "          BEFORE vs AFTER OPTIMIZATION REPORT")
+    print(Fore.CYAN + Style.BRIGHT + "=" * 65)
+
+    ram_diff  = before["ram_pct"] - after["ram_pct"]
+    disk_diff = after["disk_free_gb"] - before["disk_free_gb"]
+
+    table = [
+        ["RAM Usage (%)",
+         f"{before['ram_pct']:.1f}%",
+         f"{after['ram_pct']:.1f}%",
+         f"-{ram_diff:.1f}%" if ram_diff >= 0 else f"+{abs(ram_diff):.1f}%"],
+        ["RAM Used (GB)",
+         f"{before['ram_used_gb']:.2f} GB",
+         f"{after['ram_used_gb']:.2f} GB",
+         f"{after['ram_used_gb'] - before['ram_used_gb']:+.2f} GB"],
+        ["CPU Load (%)",
+         f"{before['cpu_pct']:.1f}%",
+         f"{after['cpu_pct']:.1f}%",
+         f"{after['cpu_pct'] - before['cpu_pct']:+.1f}%"],
+        ["C: Free Space",
+         f"{before['disk_free_gb']:.2f} GB",
+         f"{after['disk_free_gb']:.2f} GB",
+         f"{disk_diff:+.2f} GB"],
+    ]
+    try:
+        print(Fore.WHITE + tabulate(
+            table, headers=["Metric", "Before", "After", "Change"],
+            tablefmt="simple"
+        ))
+    except Exception:
+        # Absolute fallback — plain text
+        for row in table:
+            print("  " + " | ".join(str(c) for c in row))
+
+    print("\n" + Fore.GREEN + Style.BRIGHT +
+          "Optimization Complete. Your PC is now running cleaner.")
+    print(Fore.YELLOW +
+          "Note: Network changes (Winsock/IP reset) require a restart to fully apply.\n")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MAIN
+# ══════════════════════════════════════════════════════════════════════════════
 def main():
     check_admin_privileges()
     print_header()
+    print(Fore.GREEN + Style.BRIGHT +
+          "Administrator privileges verified. Starting optimization...\n")
 
-    print(Fore.GREEN + Style.BRIGHT + "Administrator privileges verified. Preparing optimization task...\n")
-    
-    # 0. Create Restore Point
-    create_system_restore_point()
+    create_restore_point()
 
-    # Capture BEFORE metrics
     print(Fore.CYAN + "\nCapturing baseline system metrics...")
-    before_metrics = get_system_metrics()
+    before = get_metrics()
 
-    # 1. Memory Cleanup (working set flush removed — causes pagefile I/O hangs)
-    kill_bloatware_and_heavy_apps()
-
-    # 2. Temp File Cleanup
+    kill_bloatware()
     mb_freed = clean_temp_files()
-
-    # 3. CPU & Power Optimization
-    optimize_cpu_and_power()
-
-    # 4. Startup Manager
-    manage_startup_programs()
-
-    # 5. Services Optimizer
+    optimize_power_and_visuals()
+    manage_startup()
     optimize_services()
-
-    # 6. Network Tweaks
     optimize_network()
 
-    # Capture AFTER metrics
-    print(Fore.CYAN + "\nCapturing post-optimization system metrics...")
+    print(Fore.CYAN + "\nCapturing post-optimization metrics...")
     time.sleep(1)
-    after_metrics = get_system_metrics()
+    after = get_metrics()
 
-    # 7. BEFORE / AFTER REPORT
-    print("\n" + Fore.CYAN + Style.BRIGHT + "=" * 65)
-    print(Fore.CYAN + Style.BRIGHT + "            BEFORE vs AFTER OPTIMIZATION REPORT")
-    print(Fore.CYAN + Style.BRIGHT + "=" * 65)
-
-    ram_diff = before_metrics["ram_pct"] - after_metrics["ram_pct"]
-    ram_diff_str = f"-{ram_diff:.1f}%" if ram_diff >= 0 else f"+{abs(ram_diff):.1f}%"
-    
-    disk_diff = after_metrics["disk_free_gb"] - before_metrics["disk_free_gb"]
-    disk_diff_str = f"+{disk_diff:.2f} GB" if disk_diff >= 0 else f"{disk_diff:.2f} GB"
-
-    table_data = [
-        ["RAM Usage (%)", f"{before_metrics['ram_pct']:.1f}%", f"{after_metrics['ram_pct']:.1f}%", ram_diff_str],
-        ["RAM Used (GB)", f"{before_metrics['ram_used_gb']:.2f} GB", f"{after_metrics['ram_used_gb']:.2f} GB", f"{- (before_metrics['ram_used_gb'] - after_metrics['ram_used_gb']):.2f} GB"],
-        ["CPU Load (%)", f"{before_metrics['cpu_pct']:.1f}%", f"{after_metrics['cpu_pct']:.1f}%", f"{after_metrics['cpu_pct'] - before_metrics['cpu_pct']:.1f}%"],
-        ["C: Drive Free Space", f"{before_metrics['disk_free_gb']:.2f} GB", f"{after_metrics['disk_free_gb']:.2f} GB", disk_diff_str],
-    ]
-
-    headers = ["Metric", "Before", "After", "Improvement"]
-    print(Fore.WHITE + tabulate(table_data, headers=headers, tablefmt="simple"))
-
-    print("\n" + Fore.GREEN + Style.BRIGHT + "Optimization Complete. Your PC is now running cleaner.")
-    print(Fore.YELLOW + "Note: Some network or service changes may require a system restart to take full effect.\n")
+    print_report(before, after, mb_freed)
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(Fore.RED + "\n[CANCELLED] Optimization process interrupted by user.")
+        print(Fore.RED + "\n[CANCELLED] Interrupted by user.")
         sys.exit(0)
