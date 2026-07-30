@@ -209,19 +209,20 @@
 
     .gui-log-box { background: #09090d; border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-family: var(--mono); font-size: 12px; color: #9ca3af; height: 110px; overflow-y: auto; text-align: left; }
 
-    /* ── SCREENSHOTS PLACEHOLDER AREA ── */
+    /* ── REAL SCREENSHOTS GRID ── */
     .screenshots-wrap {
-      max-width: 900px; margin: 40px auto 0; padding: 0 1.5rem; text-align: center;
+      max-width: 950px; margin: 50px auto 0; padding: 0 1.5rem; text-align: center;
     }
     .screenshots-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 20px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 20px;
     }
-    .screenshot-placeholder {
-      background: var(--surface); border: 1px dashed var(--border-hi); border-radius: 12px;
-      padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      min-height: 180px; color: var(--subtle); font-size: 13px; gap: 8px;
+    .screenshot-card {
+      background: var(--surface); border: 1px solid var(--border-hi); border-radius: 14px;
+      overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: transform 0.2s, border-color 0.2s;
     }
-    .screenshot-placeholder span { font-size: 24px; opacity: 0.6; }
+    .screenshot-card:hover { transform: translateY(-4px); border-color: var(--accent-bd); }
+    .screenshot-card img { width: 100%; height: auto; display: block; }
+    .screenshot-caption { padding: 14px; font-size: 13px; color: var(--muted); text-align: center; font-weight: 500; border-top: 1px solid var(--border); background: var(--surface2); }
 
     /* ── SECTION COMMON ── */
     .section { max-width: 1000px; margin: 0 auto; padding: 75px 1.5rem; }
@@ -325,6 +326,7 @@
     <ul class="nav-links">
       <li><a href="#trust">Overview</a></li>
       <li><a href="#preview">GUI App</a></li>
+      <li><a href="#screenshots">Screenshots</a></li>
       <li><a href="#features">Features</a></li>
       <li><a href="#download">Download</a></li>
       <li><a href="#faq">FAQ</a></li>
@@ -426,22 +428,24 @@
       <div style="color: #00e5a0; margin-top: 4px;">Ready. Click 'Optimize My PC' for 1-click safe cleanup.</div>
     </div>
   </div>
+</div>
 
-  <!-- REAL SCREENSHOTS PLACEHOLDER AREA -->
-  <div class="screenshots-wrap">
-    <div class="screenshots-grid">
-      <!-- Screenshot 1 -->
-      <div class="screenshot-placeholder">
-        <span aria-hidden="true">🖼️</span>
-        <div>Desktop App Interface Screenshot</div>
-        <div style="font-size: 11px; opacity: 0.6;">(Screenshot Placeholder • Coming Soon)</div>
-      </div>
-      <!-- Screenshot 2 -->
-      <div class="screenshot-placeholder">
-        <span aria-hidden="true">📊</span>
-        <div>Health Score &amp; Optimization Log</div>
-        <div style="font-size: 11px; opacity: 0.6;">(Screenshot Placeholder • Coming Soon)</div>
-      </div>
+<!-- REAL APPLICATION SCREENSHOTS -->
+<div class="screenshots-wrap" id="screenshots">
+  <div class="eyebrow">Application Showcase</div>
+  <div class="section-title" style="margin-bottom: 24px;">Real Screenshots</div>
+  <div class="screenshots-grid">
+    <div class="screenshot-card">
+      <img src="/assets/screenshot1.png" alt="PC Optimizer Desktop GUI Interface" />
+      <div class="screenshot-caption">Desktop App GUI Interface</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="/assets/screenshot2.png" alt="Health Score & Optimization Log" />
+      <div class="screenshot-caption">Health Score &amp; Optimization Log</div>
+    </div>
+    <div class="screenshot-card">
+      <img src="/assets/screenshot3.png" alt="1-Click Tuning & Restore Actions" />
+      <div class="screenshot-caption">1-Click Tuning &amp; Restore Actions</div>
     </div>
   </div>
 </div>

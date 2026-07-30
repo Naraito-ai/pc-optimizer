@@ -3,7 +3,8 @@
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "optimizer.exe", "use": "@vercel/static" },
-    { "src": "release_manifest.json", "use": "@vercel/static" }
+    { "src": "release_manifest.json", "use": "@vercel/static" },
+    { "src": "assets/**", "use": "@vercel/static" }
   ],
   "routes": [
     {
@@ -20,6 +21,10 @@
       "headers": {
         "Content-Type": "application/json"
       }
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
     },
     {
       "src": "/(.*)",
