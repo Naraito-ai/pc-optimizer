@@ -12,6 +12,9 @@ import subprocess
 from datetime import datetime
 from typing import List, Dict, Any, Tuple
 
+# ── Program Metadata ────────────────────────────────────────────────────────
+VERSION = "2.0"
+
 # ── Import Third-Party Libraries ─────────────────────────────────────────────
 try:
     import psutil
@@ -35,6 +38,11 @@ if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
         pass
+
+# ── Logging Helper ────────────────────────────────────────────────────────────
+def timestamped_log(msg: str):
+    ts = datetime.now().strftime("%H:%M:%S")
+    print(f"[{ts}] {msg}")
 
 # ── System Constants ─────────────────────────────────────────────────────────
 SYSTEM_CRITICAL_PROCESSES = {
@@ -201,7 +209,7 @@ def calculate_health_score() -> Tuple[int, str, List[str]]:
     return score, status, issues
 
 # ── Optimization Core Engine Functions ───────────────────────────────────────
-def create_restore_point_log(logger=print):
+def create_restore_point_log(logger=timestamped_log):
     logger("[1/6] Creating System Restore Point...")
     try:
         cmd = "Checkpoint-Computer -Description 'Before_PC_Optimizer' -RestorePointType 'MODIFY_SETTINGS'"
@@ -213,7 +221,7 @@ def create_restore_point_log(logger=print):
     except Exception as e:
         logger(f"  ⚠️ Restore point notice: {e}")
 
-def kill_bloatware_log(logger=print):
+def kill_bloatware_log(logger=timestamped_log):
     logger("[2/6] Terminating non-essential background bloatware...")
     killed = []
     for proc in psutil.process_iter(["pid", "name"]):
@@ -229,7 +237,7 @@ def kill_bloatware_log(logger=print):
     else:
         logger("  ✔ No active bloatware processes running.")
 
-def clean_temp_files_log(logger=print) -> float:
+def clean_temp_files_log(logger=timestamped_log) -> float:
     logger("[3/6] Cleaning temporary files & system caches...")
     local = os.environ.get("LOCALAPPDATA", "")
     user_tmp = os.environ.get("TEMP", "")
@@ -272,7 +280,7 @@ def clean_temp_files_log(logger=print) -> float:
     logger(f"  ✔ Cleared safe caches. Space freed: {freed_str}")
     return mb
 
-def optimize_power_and_visuals_log(logger=print):
+def optimize_power_and_visuals_log(logger=timestamped_log):
     logger("[4/6] Setting Balanced power plan & optimizing visual effects...")
     try:
         subprocess.run(["powercfg", "/setactive", "SCHEME_BALANCED"], check=True, capture_output=True)
@@ -289,7 +297,7 @@ def optimize_power_and_visuals_log(logger=print):
     except Exception as e:
         logger(f"  ⚠️ Visual effects notice: {e}")
 
-def optimize_startup_and_services_log(logger=print):
+def optimize_startup_and_services_log(logger=timestamped_log):
     logger("[5/6] Tuning startup apps & background telemetry...")
     # Startup apps
     locations = [
@@ -306,22 +314,25 @@ def optimize_startup_and_services_log(logger=print):
                         name, cmd, _ = winreg.EnumValue(k, idx)
                         name_l, cmd_l = name.lower(), cmd.lower()
                         protected = any(kw in name_l or kw in cmd_l for kw in STARTUP_PROTECTED_KEYWORDS)
+                        deleted = False
                         if not protected:
                             try:
                                 with winreg.OpenKey(root, path, 0, winreg.KEY_SET_VALUE) as wk:
                                     winreg.DeleteValue(wk, name)
                                 disabled_startup += 1
                                 logger(f"  ✔ Disabled startup app: '{name}'")
+                                deleted = True
                             except Exception:
                                 pass
-                        idx += 1
+                        if not deleted:
+                            idx += 1
                     except OSError:
                         break
         except Exception:
             continue
 
-    # Telemetry and Search
-    services = [("DiagTrack", "Windows Telemetry"), ("WSearch", "Windows Search Indexer")]
+    # Telemetry service only (WSearch removed to preserve start menu & file search)
+    services = [("DiagTrack", "Windows Telemetry")]
     for svc, display in services:
         try:
             subprocess.run(["sc", "stop", svc], capture_output=True)
@@ -331,7 +342,7 @@ def optimize_startup_and_services_log(logger=print):
         except Exception:
             pass
 
-def optimize_network_log(logger=print):
+def optimize_network_log(logger=timestamped_log):
     logger("[6/6] Flushing DNS & resetting network stack...")
     cmds = [
         ("Flush DNS Cache", ["ipconfig", "/flushdns"]),
@@ -348,11 +359,10 @@ def optimize_network_log(logger=print):
             pass
 
 # ── Gaming Mode Functions ─────────────────────────────────────────────────────
-def enable_gaming_mode_log(logger=print):
+def enable_gaming_mode_log(logger=timestamped_log):
     logger("🎮 Enabling Gaming Mode...")
     # 1. Power Plan -> High Performance or Ultimate Performance
     try:
-        # Check if High performance scheme exists
         res = subprocess.run(["powercfg", "/setactive", "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"], capture_output=True)
         if res.returncode != 0:
             subprocess.run(["powercfg", "/setactive", "SCHEME_MIN"], capture_output=True)
@@ -374,22 +384,32 @@ def enable_gaming_mode_log(logger=print):
     kill_bloatware_log(logger)
     logger("🎮 Gaming Mode active! Remember to restore Normal mode when finished.")
 
-def restore_normal_mode_log(logger=print):
+def restore_normal_mode_log(logger=timestamped_log):
     logger("↩ Restoring Normal Mode...")
+    # 1. Revert Power Plan to Balanced
     try:
         subprocess.run(["powercfg", "/setactive", "SCHEME_BALANCED"], capture_output=True)
         logger("  ✔ Power plan restored to Balanced (cool & quiet).")
     except Exception as e:
         logger(f"  ⚠️ Power plan notice: {e}")
 
+    # 2. Re-enable GameDVR background recording settings (AppCaptureEnabled set to 1)
     try:
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"System\GameConfigStore") as k:
             winreg.SetValueEx(k, "GameDVR_Enabled", 0, winreg.REG_DWORD, 1)
         with winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR") as k:
             winreg.SetValueEx(k, "AppCaptureEnabled", 0, winreg.REG_DWORD, 1)
-        logger("  ✔ Default Windows settings restored.")
+        logger("  ✔ GameDVR background recording settings restored.")
     except Exception as e:
-        logger(f"  ⚠️ Restore notice: {e}")
+        logger(f"  ⚠️ GameDVR restore notice: {e}")
+
+    # 3. Re-enable DiagTrack service back to Windows default (start=auto)
+    try:
+        subprocess.run(["sc", "config", "DiagTrack", "start=auto"], capture_output=True)
+        subprocess.run(["sc", "start", "DiagTrack"], capture_output=True)
+        logger("  ✔ Re-enabled Windows Telemetry (DiagTrack) service.")
+    except Exception as e:
+        logger(f"  ⚠️ DiagTrack restore notice: {e}")
 
     logger("✔ Restored to Normal Mode.")
 
@@ -401,7 +421,7 @@ def is_task_scheduled() -> bool:
     except Exception:
         return False
 
-def toggle_weekly_schedule_log(logger=print) -> bool:
+def toggle_weekly_schedule_log(logger=timestamped_log) -> bool:
     scheduled = is_task_scheduled()
     exe_path = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
     
@@ -416,8 +436,17 @@ def toggle_weekly_schedule_log(logger=print) -> bool:
             return True
     else:
         logger("⏰ Scheduling automatic weekly PC optimization (Every Sunday at 3:00 AM)...")
-        cmd = f'schtasks /create /tn "PCOptimizerWeekly" /tr "\"{exe_path}\" --auto" /sc weekly /d SUN /st 03:00 /f /rl HIGHEST'
-        res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        cmd = [
+            "schtasks", "/create",
+            "/tn", "PCOptimizerWeekly",
+            "/tr", f'"{exe_path}" --auto',
+            "/sc", "weekly",
+            "/d", "SUN",
+            "/st", "03:00",
+            "/f",
+            "/rl", "HIGHEST"
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True)
         if res.returncode == 0:
             logger("  ✔ Weekly schedule created! Runs Sundays at 3 AM.")
             return True
@@ -436,7 +465,6 @@ class PCOptimizerGUI:
         self.root.minsize(600, 620)
         self.root.configure(bg="#09090d")
 
-        # Set Window Icon if possible
         try:
             self.root.iconbitmap(default="")
         except Exception:
@@ -479,7 +507,7 @@ class PCOptimizerGUI:
         logo_label.pack(side="left")
 
         ver_label = tk.Label(
-            header_frame, text="v2.0 • Safe Tuning",
+            header_frame, text=f"v{VERSION} • Safe Tuning",
             font=("Segoe UI", 10), fg=self.colors["accent"], bg=self.colors["bg"]
         )
         ver_label.pack(side="right", ipady=4)
@@ -572,12 +600,13 @@ class PCOptimizerGUI:
             insertbackground="#ffffff", relief="flat", highlightthickness=0
         )
         self.log_area.pack(fill="both", expand=True, padx=12, pady=(0, 12))
-        self.log_area.insert(tk.END, "Ready. Click 'Optimize My PC' for a 1-click safe cleanup.\n")
+        self.log("Ready. Click 'Optimize My PC' for a 1-click safe cleanup.")
 
     # ── UI HELPERS ───────────────────────────────────────────────────────────
     def log(self, msg: str):
+        ts = datetime.now().strftime("%H:%M:%S")
         def _update():
-            self.log_area.insert(tk.END, f"{msg}\n")
+            self.log_area.insert(tk.END, f"[{ts}] {msg}\n")
             self.log_area.see(tk.END)
         self.root.after(0, _update)
 
@@ -587,10 +616,7 @@ class PCOptimizerGUI:
         h = 14
         fill_w = int((score / 100) * w)
 
-        # Bar background
         self.score_canvas.create_rectangle(0, 0, w, h, fill="#1e1e2d", width=0)
-
-        # Color based on score
         color = self.colors["green"] if score >= 80 else (self.colors["yellow"] if score >= 60 else self.colors["red"])
         self.score_canvas.create_rectangle(0, 0, fill_w, h, fill=color, width=0)
 
@@ -647,7 +673,6 @@ class PCOptimizerGUI:
             score_after, status, _ = calculate_health_score()
             self.log(f"\n🎉 OPTIMIZATION COMPLETE! Health Score: {score_before} → {score_after} ({status})")
 
-            # Update State
             now_str = datetime.now().strftime("%a %I:%M %p")
             self.state["last_run"] = now_str
             self.state["last_score_before"] = score_before
@@ -714,17 +739,17 @@ class PCOptimizerGUI:
 # CLI MODE ENGINE
 # ══════════════════════════════════════════════════════════════════════════════
 def run_cli_auto():
-    print("=========================================================")
-    print("       [+] WINDOWS PC PERFORMANCE OPTIMIZER [+]")
-    print("       AUTOMATIC BACKGROUND RUN (--auto)")
-    print("=========================================================\n")
+    timestamped_log("=========================================================")
+    timestamped_log(f"       [+] WINDOWS PC PERFORMANCE OPTIMIZER v{VERSION} [+]")
+    timestamped_log("       AUTOMATIC BACKGROUND RUN (--auto)")
+    timestamped_log("=========================================================\n")
     create_restore_point_log()
     kill_bloatware_log()
     clean_temp_files_log()
     optimize_power_and_visuals_log()
     optimize_startup_and_services_log()
     optimize_network_log()
-    print("\n[DONE] Automatic background optimization complete.")
+    timestamped_log("\n[DONE] Automatic background optimization complete.")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # ENTRY POINT
@@ -732,7 +757,6 @@ def run_cli_auto():
 def main():
     elevate_if_needed()
 
-    # Parse CLI flags
     parser = argparse.ArgumentParser(description="PC Performance Optimizer")
     parser.add_argument("--auto", action="store_true", help="Run full optimization headlessly")
     parser.add_argument("--gaming", action="store_true", help="Activate gaming mode headlessly")
@@ -749,7 +773,6 @@ def main():
         restore_normal_mode_log()
         sys.exit(0)
 
-    # Default launch: GUI App Window
     root = tk.Tk()
     app = PCOptimizerGUI(root)
     root.mainloop()
