@@ -68,11 +68,33 @@ def is_admin() -> bool:
     except Exception:
         return False
 
-def check_admin_privileges():
+def elevate_if_needed():
+    """If not running as admin, re-launch self with UAC elevation prompt."""
     if not is_admin():
-        print(Fore.RED + Style.BRIGHT + "[ERROR] Administrator privileges are required to run this tool.")
-        print(Fore.YELLOW + "Please restart your terminal/PowerShell as Administrator or right-click the executable and select 'Run as Administrator'.")
-        sys.exit(1)
+        # Re-launch the current executable (or script) with elevated privileges
+        script = sys.executable
+        params = " ".join(sys.argv)
+        try:
+            ret = ctypes.windll.shell32.ShellExecuteW(
+                None, "runas", script, params, None, 1
+            )
+            if ret <= 32:
+                # ShellExecute failed (user cancelled UAC or error)
+                import tkinter as tk
+                from tkinter import messagebox
+                root = tk.Tk()
+                root.withdraw()
+                messagebox.showerror(
+                    "Admin Required",
+                    "This tool requires Administrator privileges.\n"
+                    "Please right-click the .exe and choose 'Run as administrator'."
+                )
+        except Exception:
+            pass
+        sys.exit(0)  # Exit the non-elevated instance
+
+def check_admin_privileges():
+    elevate_if_needed()  # Will UAC-prompt and relaunch if not admin
 
 def print_step_start(step_name: str):
     print(Fore.WHITE + Style.BRIGHT + f"\n[RUNNING] {step_name}...")
