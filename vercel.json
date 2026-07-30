@@ -1,17 +1,14 @@
 {
+  "framework": null,
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
     {
       "source": "/optimizer.exe",
       "headers": [
-        { "key": "Content-Type",        "value": "application/octet-stream" },
+        { "key": "Content-Type", "value": "application/octet-stream" },
         { "key": "Content-Disposition", "value": "attachment; filename=\"optimizer.exe\"" }
       ]
     }
-  ],
-  "routes": [
-    { "src": "/optimizer.exe", "dest": "/optimizer.exe" },
-    { "src": "/(.*)",          "dest": "/index.html"    }
   ]
 }

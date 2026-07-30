@@ -1,5 +1,4 @@
-optimizer.py
-build.py
+*.py
 requirements.txt
 dist/
 build/
