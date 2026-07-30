@@ -5,6 +5,7 @@ import shutil
 import ctypes
 import winreg
 import glob
+import argparse
 import subprocess
 from typing import List, Tuple, Dict, Any
 
@@ -19,12 +20,22 @@ except ImportError:
 # Initialize colorama
 init(autoreset=True)
 
+# Parse command line arguments
+parser = argparse.ArgumentParser(description="Windows PC Performance Optimizer")
+parser.add_argument("--auto", "-a", action="store_true", help="Run optimizations automatically without interactive prompts")
+parser.add_argument("--interactive", "-i", action="store_true", help="Force interactive prompt mode")
+args, _ = parser.parse_known_args()
+
+# AUTO_MODE is enabled by default for one-click behavior, unless explicitly set to --interactive
+AUTO_MODE = True if (args.auto or not args.interactive) else False
+
 # System critical process blacklist (Must never be terminated)
 SYSTEM_CRITICAL_PROCESSES = {
     "svchost.exe", "lsass.exe", "csrss.exe", "winlogon.exe", "explorer.exe",
     "smss.exe", "services.exe", "system", "idle", "registry", "spoolsv.exe",
     "dwm.exe", "ctfmon.exe", "fontdrvhost.exe", "sihost.exe", "taskhostw.exe",
-    "securityhealthservice.exe", "smartscreen.exe", "conhost.exe"
+    "securityhealthservice.exe", "smartscreen.exe", "conhost.exe",
+    "memcompression", "vmmem", "vmmemwsl"
 }
 
 # Known bloatware / background processes to target
@@ -34,11 +45,21 @@ BLOATWARE_PROCESSES = [
     "xboxstat.exe", "gamebar.exe"
 ]
 
+# Startup keywords to protect during auto mode
+STARTUP_PROTECTED_KEYWORDS = [
+    "securityhealth", "realtek", "nvidia", "amd", "intel",
+    "antivirus", "defender", "bluetooth"
+]
+
 def print_header():
     os.system('cls' if os.name == 'nt' else 'clear')
     print(Fore.CYAN + Style.BRIGHT + "=" * 65)
     print(Fore.CYAN + Style.BRIGHT + "       [+] WINDOWS PC PERFORMANCE OPTIMIZER [+]")
     print(Fore.CYAN + Style.BRIGHT + "       Production-Ready System Tuning Tool")
+    if AUTO_MODE:
+        print(Fore.MAGENTA + Style.BRIGHT + "       MODE: AUTOMATIC ONE-CLICK ENGINE (--auto)")
+    else:
+        print(Fore.YELLOW + Style.BRIGHT + "       MODE: INTERACTIVE PROMPT ENGINE")
     print(Fore.CYAN + Style.BRIGHT + "=" * 65 + "\n")
 
 def is_admin() -> bool:
@@ -64,6 +85,9 @@ def print_step_skipped(step_name: str, reason: str = ""):
     extra = f" ({reason})" if reason else ""
     print(Fore.YELLOW + Style.BRIGHT + f"[SKIPPED] {step_name}{extra}")
 
+def print_auto_action(action_desc: str):
+    print(Fore.MAGENTA + Style.BRIGHT + f"  [AUTO] {action_desc}")
+
 def print_warning(msg: str):
     print(Fore.YELLOW + f"[WARNING] {msg}")
 
@@ -71,6 +95,8 @@ def print_error(msg: str):
     print(Fore.RED + f"[ERROR] {msg}")
 
 def ask_user_yn(prompt_text: str, default_yes: bool = False) -> bool:
+    if AUTO_MODE:
+        return True
     default_str = " [Y/n]: " if default_yes else " [y/N]: "
     try:
         choice = input(Fore.LIGHTWHITE_EX + prompt_text + default_str).strip().lower()
@@ -137,15 +163,18 @@ def flush_standby_memory():
                     freed_count += 1
             except Exception:
                 continue
+        
+        if AUTO_MODE:
+            print_auto_action(f"Flushed RAM working sets for {freed_count} processes (skipped MemCompression & system tasks)")
         print_step_done("Flushing Process Working Sets", f"Emptied RAM working sets for {freed_count} processes")
     except Exception as e:
-        print_warning(f"Working set flush encounterd an issue: {e}")
+        print_warning(f"Working set flush encountered an issue: {e}")
         print_step_skipped("Flushing Process Working Sets")
 
 def kill_bloatware_and_heavy_apps():
     print_step_start("Bloatware & Non-Essential Process Optimizer")
     
-    # Part A: Target bloatware
+    # Part A: Target bloatware automatically
     terminated_bloat = []
     for proc in psutil.process_iter(['pid', 'name']):
         try:
@@ -157,42 +186,49 @@ def kill_bloatware_and_heavy_apps():
             continue
 
     if terminated_bloat:
-        print(Fore.GREEN + f"  -> Terminated bloatware processes: {', '.join(set(terminated_bloat))}")
+        bloat_str = ", ".join(set(terminated_bloat))
+        if AUTO_MODE:
+            print_auto_action(f"Terminated bloatware processes: {bloat_str}")
+        else:
+            print(Fore.GREEN + f"  -> Terminated bloatware processes: {bloat_str}")
 
     # Part B: Non-system processes using > 200MB RAM
-    print(Fore.CYAN + "\n  Checking non-system processes consuming > 200MB RAM...")
-    heavy_procs = []
-    current_pid = os.getpid()
-
-    for proc in psutil.process_iter(['pid', 'name', 'memory_info']):
-        try:
-            pid = proc.info['pid']
-            pname = proc.info['name'] or 'Unknown'
-            pname_lower = pname.lower()
-            
-            if pid == current_pid or pid <= 4 or pname_lower in SYSTEM_CRITICAL_PROCESSES:
-                continue
-            
-            rss_mb = proc.info['memory_info'].rss / (1024 * 1024)
-            if rss_mb > 200:
-                heavy_procs.append((pid, pname, rss_mb))
-        except Exception:
-            continue
-
     killed_count = 0
-    if heavy_procs:
-        print(Fore.YELLOW + f"  Found {len(heavy_procs)} heavy process(es) using > 200MB RAM:")
-        for pid, name, rss in heavy_procs:
-            if ask_user_yn(f"    Terminate '{name}' (PID: {pid}, RAM: {rss:.1f} MB)?"):
-                try:
-                    p = psutil.Process(pid)
-                    p.kill()
-                    killed_count += 1
-                    print(Fore.GREEN + f"    [OK] Terminated {name}")
-                except Exception as e:
-                    print_error(f"    Could not terminate {name}: {e}")
+    if not AUTO_MODE:
+        print(Fore.CYAN + "\n  Checking non-system processes consuming > 200MB RAM...")
+        heavy_procs = []
+        current_pid = os.getpid()
+
+        for proc in psutil.process_iter(['pid', 'name', 'memory_info']):
+            try:
+                pid = proc.info['pid']
+                pname = proc.info['name'] or 'Unknown'
+                pname_lower = pname.lower()
+                
+                if pid == current_pid or pid <= 4 or pname_lower in SYSTEM_CRITICAL_PROCESSES:
+                    continue
+                
+                rss_mb = proc.info['memory_info'].rss / (1024 * 1024)
+                if rss_mb > 200:
+                    heavy_procs.append((pid, pname, rss_mb))
+            except Exception:
+                continue
+
+        if heavy_procs:
+            print(Fore.YELLOW + f"  Found {len(heavy_procs)} heavy process(es) using > 200MB RAM:")
+            for pid, name, rss in heavy_procs:
+                if ask_user_yn(f"    Terminate '{name}' (PID: {pid}, RAM: {rss:.1f} MB)?"):
+                    try:
+                        p = psutil.Process(pid)
+                        p.kill()
+                        killed_count += 1
+                        print(Fore.GREEN + f"    [OK] Terminated {name}")
+                    except Exception as e:
+                        print_error(f"    Could not terminate {name}: {e}")
+        else:
+            print(Fore.WHITE + "  No non-system processes found using > 200MB RAM.")
     else:
-        print(Fore.WHITE + "  No non-system processes found using > 200MB RAM.")
+        print_auto_action("Skipped killing active user applications (>200MB RAM) to preserve open user work.")
 
     print_step_done("Bloatware & Process Cleanup", f"Killed {len(set(terminated_bloat)) + killed_count} process(es)")
 
@@ -229,7 +265,11 @@ def clean_temp_files() -> float:
         if not target_dir or not os.path.exists(target_dir):
             continue
 
-        print(Fore.WHITE + f"  Cleaning: {target_dir}")
+        if AUTO_MODE:
+            print_auto_action(f"Cleaning safe directory: {target_dir}")
+        else:
+            print(Fore.WHITE + f"  Cleaning: {target_dir}")
+            
         for root, dirs, files in os.walk(target_dir):
             for file in files:
                 file_path = os.path.join(root, file)
@@ -238,7 +278,6 @@ def clean_temp_files() -> float:
                     os.remove(file_path)
                     bytes_freed += size
                 except Exception:
-                    # Locked files in use by Windows/apps skipped safely
                     pass
 
             for d in dirs:
@@ -262,10 +301,12 @@ def optimize_cpu_and_power():
 
     # 1. Power Plan to High Performance
     try:
-        # High Performance GUID
         high_perf_guid = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
         subprocess.run(["powercfg", "/setactive", high_perf_guid], check=True, capture_output=True)
-        print(Fore.GREEN + "  [OK] Windows Power Plan switched to 'High Performance'")
+        if AUTO_MODE:
+            print_auto_action("Power plan switched to High Performance")
+        else:
+            print(Fore.GREEN + "  [OK] Windows Power Plan switched to 'High Performance'")
     except Exception as e:
         print_warning(f"Could not set High Performance power plan: {e}")
 
@@ -274,24 +315,24 @@ def optimize_cpu_and_power():
         key_path = r"SYSTEM\CurrentControlSet\Control\Power\PowerThrottling"
         with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, key_path) as key:
             winreg.SetValueEx(key, "PowerThrottlingOff", 0, winreg.REG_DWORD, 1)
-        print(Fore.GREEN + "  [OK] Disabled Power Throttling in Registry")
+        if AUTO_MODE:
+            print_auto_action("Disabled CPU Power Throttling in Registry")
+        else:
+            print(Fore.GREEN + "  [OK] Disabled Power Throttling in Registry")
     except Exception as e:
         print_warning(f"Could not update Power Throttling registry key: {e}")
 
     # 3. Disable Visual Effects (Animations & Effects)
     if ask_user_yn("  Optimize Windows visual effects for best performance?", default_yes=True):
         try:
-            # Set VisualFXSetting to Adjust for Best Performance (2)
             key_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects"
             with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path) as key:
                 winreg.SetValueEx(key, "VisualFXSetting", 0, winreg.REG_DWORD, 2)
 
-            # Disable window animation effects
             desktop_key = r"Control Panel\Desktop"
             with winreg.OpenKey(winreg.HKEY_CURRENT_USER, desktop_key, 0, winreg.KEY_SET_VALUE) as key:
                 winreg.SetValueEx(key, "MinAnimate", 0, winreg.REG_SZ, "0")
 
-            # Apply SystemParametersInfo visual updates
             SPI_SETANIMATION = 0x0043
             class ANIMATIONINFO(ctypes.Structure):
                 _fields_ = [("cbSize", ctypes.c_uint), ("iMinAnimate", ctypes.c_int)]
@@ -299,7 +340,10 @@ def optimize_cpu_and_power():
             anim = ANIMATIONINFO(cbSize=ctypes.sizeof(ANIMATIONINFO), iMinAnimate=0)
             ctypes.windll.user32.SystemParametersInfoW(SPI_SETANIMATION, ctypes.sizeof(ANIMATIONINFO), ctypes.byref(anim), 3)
 
-            print(Fore.GREEN + "  [OK] Visual effects optimized for maximum performance")
+            if AUTO_MODE:
+                print_auto_action("Visual effects optimized for maximum performance")
+            else:
+                print(Fore.GREEN + "  [OK] Visual effects optimized for maximum performance")
         except Exception as e:
             print_warning(f"Could not adjust visual effects settings: {e}")
 
@@ -340,15 +384,33 @@ def manage_startup_programs():
     disabled_count = 0
 
     for root, key_path, label, name, command in items_found:
-        print(Fore.WHITE + f"  * [{label}] {Fore.YELLOW}{name}{Fore.WHITE} -> {command[:70]}")
-        if ask_user_yn(f"    Disable/Remove '{name}' from startup?"):
-            try:
-                with winreg.OpenKey(root, key_path, 0, winreg.KEY_SET_VALUE) as key:
-                    winreg.DeleteValue(key, name)
-                disabled_count += 1
-                print(Fore.GREEN + f"    [OK] Disabled startup item: {name}")
-            except Exception as e:
-                print_error(f"    Failed to remove {name}: {e}")
+        name_lower = name.lower()
+        cmd_lower = command.lower()
+
+        # Check if item contains any protected keywords
+        is_protected = any(kw in name_lower or kw in cmd_lower for kw in STARTUP_PROTECTED_KEYWORDS)
+
+        if AUTO_MODE:
+            if is_protected:
+                print_auto_action(f"Kept protected startup item '{name}'")
+            else:
+                try:
+                    with winreg.OpenKey(root, key_path, 0, winreg.KEY_SET_VALUE) as key:
+                        winreg.DeleteValue(key, name)
+                    disabled_count += 1
+                    print_auto_action(f"Disabled non-essential startup item '{name}'")
+                except Exception as e:
+                    print_error(f"  Failed to remove startup item {name}: {e}")
+        else:
+            print(Fore.WHITE + f"  * [{label}] {Fore.YELLOW}{name}{Fore.WHITE} -> {command[:70]}")
+            if ask_user_yn(f"    Disable/Remove '{name}' from startup?"):
+                try:
+                    with winreg.OpenKey(root, key_path, 0, winreg.KEY_SET_VALUE) as key:
+                        winreg.DeleteValue(key, name)
+                    disabled_count += 1
+                    print(Fore.GREEN + f"    [OK] Disabled startup item: {name}")
+                except Exception as e:
+                    print_error(f"    Failed to remove {name}: {e}")
 
     print_step_done("Startup Program Manager", f"Disabled {disabled_count} program(s)")
 
@@ -358,32 +420,47 @@ def manage_startup_programs():
 def optimize_services():
     print_step_start("Windows Services Optimizer")
 
-    # Services list: (service_name, display_name, prompt_reason)
+    # Services list: (service_name, display_name, reason, allow_auto)
     target_services = [
-        ("SysMain", "SysMain / Superfetch", "Preloads apps into RAM; disabling reduces disk/RAM overhead"),
-        ("PrintSpooler", "Print Spooler", "Only needed if you use a printer"),
-        ("DiagTrack", "Connected User Experiences and Telemetry", "Disables background Windows telemetry data collection"),
-        ("WSearch", "Windows Search Indexer", "Disables file search indexing to reduce disk/CPU usage")
+        ("SysMain", "SysMain / Superfetch", "Preloads apps into RAM; disabling reduces disk/RAM overhead", True),
+        ("DiagTrack", "Connected User Experiences and Telemetry", "Disables background Windows telemetry data collection", True),
+        ("WSearch", "Windows Search Indexer", "Disables file search indexing to reduce disk/CPU usage", True),
+        ("PrintSpooler", "Print Spooler", "Only needed if you use a printer", False)
     ]
 
     disabled_services = 0
-    for service_name, display_name, reason in target_services:
-        prompt = f"Disable service '{display_name}' ({reason})?"
-        if ask_user_yn(f"  {prompt}"):
+    for service_name, display_name, reason, allow_auto in target_services:
+        if AUTO_MODE:
+            if not allow_auto:
+                print_auto_action(f"Skipped '{display_name}' service in --auto mode (requires manual confirmation)")
+                print_step_skipped(display_name, "Skipped in auto mode")
+                continue
+            
             try:
-                # Stop service
                 subprocess.run(["sc", "stop", service_name], capture_output=True, text=True)
-                # Disable service
                 res = subprocess.run(["sc", "config", service_name, "start=disabled"], capture_output=True, text=True)
                 if res.returncode == 0:
-                    print(Fore.GREEN + f"  [OK] Stopped and disabled service: {display_name}")
+                    print_auto_action(f"Stopped and disabled service '{display_name}'")
                     disabled_services += 1
                 else:
                     print_warning(f"Could not disable {display_name}: {res.stderr.strip()}")
             except Exception as e:
                 print_error(f"Failed to modify service {service_name}: {e}")
         else:
-            print_step_skipped(display_name, "Kept enabled by user")
+            prompt = f"Disable service '{display_name}' ({reason})?"
+            if ask_user_yn(f"  {prompt}"):
+                try:
+                    subprocess.run(["sc", "stop", service_name], capture_output=True, text=True)
+                    res = subprocess.run(["sc", "config", service_name, "start=disabled"], capture_output=True, text=True)
+                    if res.returncode == 0:
+                        print(Fore.GREEN + f"  [OK] Stopped and disabled service: {display_name}")
+                        disabled_services += 1
+                    else:
+                        print_warning(f"Could not disable {display_name}: {res.stderr.strip()}")
+                except Exception as e:
+                    print_error(f"Failed to modify service {service_name}: {e}")
+            else:
+                print_step_skipped(display_name, "Kept enabled by user")
 
     print_step_done("Windows Services Optimizer", f"{disabled_services} service(s) disabled")
 
@@ -402,10 +479,17 @@ def optimize_network():
 
     for label, cmd in net_commands:
         try:
-            print(Fore.WHITE + f"  Executing: {' '.join(cmd)}")
+            if AUTO_MODE:
+                print_auto_action(f"Executing network tweak: {' '.join(cmd)}")
+            else:
+                print(Fore.WHITE + f"  Executing: {' '.join(cmd)}")
+            
             res = subprocess.run(cmd, capture_output=True, text=True)
             if res.returncode == 0:
-                print(Fore.GREEN + f"  [OK] {label} succeeded")
+                if AUTO_MODE:
+                    print_auto_action(f"{label} completed successfully")
+                else:
+                    print(Fore.GREEN + f"  [OK] {label} succeeded")
             else:
                 print_warning(f"{label} notice: {res.stdout.strip() or res.stderr.strip()}")
         except Exception as e:

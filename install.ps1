@@ -98,7 +98,7 @@ Write-Host "   🚀 Launching PC Performance Optimizer..." -ForegroundColor Gree
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 
-Start-Process python -ArgumentList "$workDir\optimizer.py" -Wait -NoNewWindow
+Start-Process python -ArgumentList "$workDir\optimizer.py --auto" -Wait -NoNewWindow
 
 Write-Host ""
 Write-Host "[✓] Optimizer session finished." -ForegroundColor Green
