@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PC Optimizer — Free & Open Source Windows Performance Tool</title>
-  <meta name="description" content="Clean junk files, disable telemetry, optimize startup, and flush your network — safely, in under 60 seconds. No overclocking. No overheating." />
-  <meta name="keywords" content="windows optimizer, pc cleaner, speed up windows 11, bloatware remover, open source pc optimizer" />
+  <title>PC Optimizer — Modern Windows PC Performance App</title>
+  <meta name="description" content="One-click Windows performance app. Live health score, 1-click safe optimization, gaming mode, and automated weekly schedule." />
+  <meta name="keywords" content="windows optimizer, pc cleaner, speed up windows, gaming mode, open source pc optimizer" />
   <meta name="author" content="Naraito-ai" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://pc-optimizer-tau.vercel.app/" />
-  <meta property="og:title" content="PC Optimizer — Free & Open Source Windows Performance Tool" />
-  <meta property="og:description" content="Safe, automatic PC optimization for Windows. No RAM flush. No overheating. Just cleaner, faster boot." />
+  <meta property="og:title" content="PC Optimizer — Modern Windows PC Performance App" />
+  <meta property="og:description" content="One-click GUI app for Windows. Health Score, Gaming Mode, and automated weekly tuning. 100% Free & Open Source." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -33,6 +33,7 @@
       --accent-glow:  rgba(0,229,160,0.25);
       --accent-dim:   rgba(0,229,160,0.10);
       --accent-bd:    rgba(0,229,160,0.35);
+      --purple:       #a855f7;
       --cyan:         #38bdf8;
       --warn:         #fbbf24;
       --font:  'Inter', system-ui, sans-serif;
@@ -57,7 +58,7 @@
       top: -20%; left: 50%;
       transform: translateX(-50%);
       width: 1000px; height: 600px;
-      background: radial-gradient(circle, rgba(0,229,160,.12) 0%, rgba(56,189,248,.05) 40%, transparent 70%);
+      background: radial-gradient(circle, rgba(0,229,160,.12) 0%, rgba(168,85,247,.06) 40%, transparent 70%);
       pointer-events: none;
       z-index: 0;
       filter: blur(60px);
@@ -101,7 +102,7 @@
     .hero {
       position: relative; z-index: 1;
       max-width: 900px; margin: 0 auto;
-      padding: 110px 2rem 70px; text-align: center;
+      padding: 100px 2rem 50px; text-align: center;
     }
     .hero-badge {
       display: inline-flex; align-items: center; gap: 8px;
@@ -114,63 +115,65 @@
     @keyframes pulse { 0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.4} }
 
     h1 { font-size: clamp(2.4rem,6vw,4.2rem); font-weight: 700; letter-spacing: -1.8px; line-height: 1.08; margin-bottom: 22px; color: #fff; }
-    .hl { background: linear-gradient(135deg,#00e5a0,#38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .hero-sub { font-size: 19px; color: var(--muted); max-width: 620px; margin: 0 auto 40px; line-height: 1.6; }
+    .hl { background: linear-gradient(135deg,#00e5a0,#a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-sub { font-size: 19px; color: var(--muted); max-width: 640px; margin: 0 auto 40px; line-height: 1.6; }
     .hero-btns { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
 
     .btn-primary {
       display: inline-flex; align-items: center; gap: 10px;
-      font-size: 15px; font-weight: 600; color: #000;
-      background: var(--accent); padding: 14px 28px; border-radius: 10px;
-      text-decoration: none; box-shadow: 0 4px 20px var(--accent-glow); transition: all .2s;
+      font-size: 16px; font-weight: 600; color: #000;
+      background: var(--accent); padding: 16px 32px; border-radius: 12px;
+      text-decoration: none; box-shadow: 0 4px 25px var(--accent-glow); transition: all .2s;
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 30px rgba(0,229,160,.45); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 35px rgba(0,229,160,.45); }
+    
     .btn-secondary {
       display: inline-flex; align-items: center; gap: 10px;
       font-size: 15px; font-weight: 500; color: var(--text);
       background: var(--surface2); border: 1px solid var(--border-hi);
-      padding: 14px 26px; border-radius: 10px; text-decoration: none; transition: all .2s;
+      padding: 15px 26px; border-radius: 12px; text-decoration: none; transition: all .2s;
     }
     .btn-secondary:hover { background: var(--surface3); border-color: rgba(255,255,255,.3); transform: translateY(-2px); }
 
-    /* ── TERMINAL ── */
-    .term-wrap { max-width: 820px; margin: 60px auto 0; padding: 0 1.5rem; position: relative; z-index: 2; }
-    .terminal { background: #09090c; border: 1px solid var(--border-hi); border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,.6), 0 0 30px rgba(0,229,160,.05); overflow: hidden; }
-    .term-bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
-    .term-dots { display: flex; gap: 8px; }
-    .dot { width: 12px; height: 12px; border-radius: 50%; }
-    .dr{background:#ff5f57}.dy{background:#febc2e}.dg{background:#28c840}
-    .term-title { font-size: 12.5px; color: var(--muted); font-family: var(--mono); }
-    .demo-btn { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-dim); border: 1px solid var(--accent-bd); padding: 4px 12px; border-radius: 6px; cursor: pointer; transition: all .15s; }
-    .demo-btn:hover { background: var(--accent); color: #000; }
-    .term-body { padding: 24px; font-family: var(--mono); font-size: 13.5px; line-height: 1.7; min-height: 340px; max-height: 480px; overflow-y: auto; }
-    .tp{color:var(--accent);font-weight:600} .tc{color:#fff} .tco{color:#52525b}
-    .ts{color:var(--accent)} .ti{color:var(--cyan)} .tm{color:#71717a} .th{color:#facc15}
-
-    /* Safety notice */
-    .safe-notice {
-      margin-top: 20px;
-      display: flex; align-items: flex-start; gap: 14px;
-      background: rgba(0,229,160,.06); border: 1px solid rgba(0,229,160,.25);
-      border-radius: 12px; padding: 16px 20px;
+    /* ── GUI MOCKUP / PREVIEW ── */
+    .app-preview-wrap { max-width: 720px; margin: 50px auto 0; padding: 0 1.5rem; position: relative; z-index: 2; }
+    .gui-card {
+      background: #12121a; border: 1px solid var(--border-hi); border-radius: 16px;
+      box-shadow: 0 25px 60px rgba(0,0,0,.8), 0 0 40px rgba(0,229,160,.08);
+      overflow: hidden; padding: 24px;
     }
-    .safe-notice-icon { font-size: 18px; flex-shrink: 0; }
-    .safe-notice-text { font-size: 13.5px; color: #6ee7c0; line-height: 1.55; }
-    .safe-notice-text strong { color: var(--accent); }
+    .gui-hdr { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px; }
+    .gui-title { font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .gui-ver { font-size: 12px; color: var(--accent); background: var(--accent-dim); border: 1px solid var(--accent-bd); padding: 3px 10px; border-radius: 100px; }
+    
+    .gui-score-box { background: #09090d; border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+    .gui-score-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .gui-score-label { font-size: 13px; color: var(--muted); font-weight: 600; }
+    .gui-score-val { font-size: 20px; font-weight: 800; color: var(--accent); }
+    .gui-pill { font-size: 11px; font-weight: 700; color: #000; background: var(--accent); padding: 3px 10px; border-radius: 100px; }
+    .gui-bar-bg { height: 10px; background: #1f1f2e; border-radius: 100px; overflow: hidden; margin-bottom: 10px; }
+    .gui-bar-fill { height: 100%; width: 74%; background: var(--accent); border-radius: 100px; transition: width 0.5s ease; }
+    .gui-issues { font-size: 12px; color: var(--warn); }
 
-    /* ── STATS ── */
-    .stats { max-width: 900px; margin: 70px auto; padding: 0 1.5rem; display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 16px; }
-    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px 20px; text-align: center; transition: border-color .2s,transform .2s; }
-    .stat:hover { border-color: var(--accent-bd); transform: translateY(-2px); }
-    .stat-num { font-size: 2.2rem; font-weight: 700; color: var(--accent); letter-spacing: -1px; line-height: 1; margin-bottom: 6px; }
-    .stat-label { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .gui-btn-main {
+      width: 100%; padding: 14px; background: var(--accent); color: #000;
+      font-size: 15px; font-weight: 700; border-radius: 10px; border: none;
+      cursor: pointer; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .gui-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .gui-btn-sub {
+      padding: 10px; background: #1f2430; color: #fff; font-size: 12px; font-weight: 600;
+      border-radius: 8px; border: 1px solid var(--border); text-align: center; cursor: pointer;
+    }
+    .gui-btn-sub.purple { background: #261a38; border-color: rgba(168,85,247,.3); color: #e9d5ff; }
 
-    /* ── SECTION ── */
+    .gui-log-box { background: #09090d; border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-family: var(--mono); font-size: 12px; color: #9ca3af; height: 110px; overflow-y: auto; text-align: left; }
+
+    /* ── FEATURES ── */
     .section { max-width: 1000px; margin: 0 auto; padding: 80px 1.5rem; }
     .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
     .section-title { font-size: clamp(1.8rem,3.5vw,2.5rem); font-weight: 700; letter-spacing: -1px; color: #fff; margin-bottom: 48px; line-height: 1.2; }
 
-    /* ── FEATURES ── */
     .features { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 20px; }
     .feature { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; transition: all .2s; }
     .feature:hover { border-color: var(--border-hi); background: var(--surface2); transform: translateY(-3px); }
@@ -178,43 +181,20 @@
     .feat-title { font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 10px; }
     .feat-desc { font-size: 14px; color: var(--muted); line-height: 1.65; }
 
-    /* ── SAFE BY DESIGN ── */
-    .safe-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 16px; }
-    .safe-card { display: flex; align-items: flex-start; gap: 14px; padding: 20px; border-radius: 12px; transition: border-color .2s; }
-    .safe-card.good { background: rgba(0,229,160,.06); border: 1px solid rgba(0,229,160,.2); }
-    .safe-card.bad  { background: rgba(248,113,113,.05); border: 1px solid rgba(248,113,113,.2); }
-    .safe-card-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
-    .safe-card-title { font-size: 14.5px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-    .safe-card-desc  { font-size: 13px; color: var(--muted); line-height: 1.55; }
-
     /* ── INSTALL ── */
-    .install-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: 16px; overflow: hidden; }
-    .install-hdr { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); }
-    .tab-btn { font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--muted); background: transparent; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: all .15s; }
-    .tab-btn.active { color: var(--accent); background: var(--accent-dim); border: 1px solid var(--accent-bd); font-weight: 600; }
-    .install-body { padding: 24px; }
-    .cmd-box { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #09090c; border: 1px solid var(--border); padding: 16px 20px; border-radius: 10px; margin-bottom: 14px; }
-    .cmd-text { font-family: var(--mono); font-size: 13px; color: #38bdf8; word-break: break-all; }
-    .copy-btn, .dl-btn {
-      font-family: var(--font); font-size: 12px; font-weight: 600;
-      color: var(--text); background: var(--surface3); border: 1px solid var(--border-hi);
-      padding: 8px 16px; border-radius: 6px; cursor: pointer; flex-shrink: 0;
+    .install-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: 16px; overflow: hidden; padding: 30px; }
+    .cmd-box { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #09090c; border: 1px solid var(--border); padding: 18px 24px; border-radius: 12px; margin-bottom: 20px; }
+    .cmd-text { font-family: var(--mono); font-size: 14px; color: #38bdf8; word-break: break-all; }
+    .dl-btn {
+      font-family: var(--font); font-size: 13px; font-weight: 700;
+      color: #000; background: var(--accent); border: none;
+      padding: 10px 22px; border-radius: 8px; cursor: pointer; flex-shrink: 0;
       transition: all .15s; text-decoration: none; white-space: nowrap;
     }
-    .copy-btn:hover, .dl-btn:hover { background: var(--accent); color: #000; border-color: var(--accent); }
-    .steps { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+    .dl-btn:hover { opacity: .9; transform: translateY(-1px); }
+    .steps { list-style: none; display: flex; flex-direction: column; gap: 12px; }
     .steps li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--muted); }
-    .step-n { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent-bd); color: var(--accent); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
-    .install-note { font-size: 13px; color: var(--subtle); margin-top: 12px; }
-    .install-note strong { color: var(--text); }
-
-    /* ── SAFETY CARDS ── */
-    .safety-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 20px; }
-    .safety-card { display: flex; align-items: flex-start; gap: 14px; background: var(--surface); border: 1px solid var(--border); padding: 20px; border-radius: 12px; transition: border-color .2s; }
-    .safety-card:hover { border-color: var(--accent-bd); }
-    .s-icon { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent-bd); display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--accent); flex-shrink: 0; margin-top: 2px; }
-    .s-title { font-size: 14.5px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-    .s-desc  { font-size: 13px; color: var(--muted); }
+    .step-n { width: 24px; height: 24px; border-radius: 50%; background: var(--accent-dim); border: 1px solid var(--accent-bd); color: var(--accent); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
 
     /* ── FOOTER ── */
     footer { border-top: 1px solid var(--border); padding: 40px 2rem; text-align: center; background: #050507; }
@@ -226,8 +206,9 @@
       nav{padding:0 1rem}
       .nav-links{display:none}
       .hero{padding:70px 1rem 40px}
+      .gui-btn-grid{grid-template-columns:1fr}
       .cmd-box{flex-direction:column;align-items:flex-start}
-      .copy-btn,.dl-btn{width:100%;text-align:center}
+      .dl-btn{width:100%;text-align:center}
     }
   </style>
 </head>
@@ -240,195 +221,130 @@
       <div class="nav-badge">⚡</div>PC Optimizer
     </a>
     <ul class="nav-links">
+      <li><a href="#preview">GUI App</a></li>
       <li><a href="#features">Features</a></li>
-      <li><a href="#demo">Live Demo</a></li>
-      <li><a href="#safe">Safe by Design</a></li>
-      <li><a href="#install">Install</a></li>
+      <li><a href="#download">Download</a></li>
       <li><a href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener">GitHub ↗</a></li>
     </ul>
-    <a class="nav-cta" href="#install">Get Started</a>
+    <a class="nav-cta" href="#download">Download App</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge"><div class="pulse"></div> Open Source &amp; Free Forever</div>
-  <h1>Your Windows PC, <span class="hl">faster</span>.<br>In one single click.</h1>
+  <div class="hero-badge"><div class="pulse"></div> Modern Desktop App • v2.0</div>
+  <h1>No terminal needed.<br><span class="hl">Just double-click &amp; optimize.</span></h1>
   <p class="hero-sub">
-    PC Optimizer cleans junk files, kills telemetry, trims startup apps, and resets your
-    network — safely in under 60 seconds. No overclocking. No overheating.
+    A beautiful desktop app for Windows. Monitor your PC Health Score, run 1-click safe cleanup,
+    toggle Gaming Mode, and schedule weekly maintenance automatically.
   </p>
   <div class="hero-btns">
-    <a class="btn-primary" href="#install">⚡ Fast Install (PowerShell)</a>
-    <a class="btn-secondary" href="/optimizer.exe">⬇ Download optimizer.exe</a>
+    <a class="btn-primary" href="/optimizer.exe">
+      ⬇ Download optimizer.exe
+    </a>
+    <a class="btn-secondary" href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener">
+      ⭐ View Source on GitHub
+    </a>
   </div>
 </section>
 
-<!-- TERMINAL DEMO -->
-<div class="term-wrap" id="demo">
-  <div class="terminal">
-    <div class="term-bar">
-      <div class="term-dots"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div></div>
-      <span class="term-title">PC Optimizer v1.0 — Live Terminal Simulator</span>
-      <button class="demo-btn" id="demoBtn" onclick="runDemo()">▶ Run Demo</button>
+<!-- GUI PREVIEW MOCKUP -->
+<div class="app-preview-wrap" id="preview">
+  <div class="gui-card">
+    <div class="gui-hdr">
+      <div class="gui-title">⚡ PC Optimizer</div>
+      <div class="gui-ver">v2.0 • Safe Tuning</div>
     </div>
-    <div class="term-body" id="termBody">
-      <div><span class="tco"># Click "Run Demo" to see real-time optimization in action</span></div><br>
-      <div><span class="tp">PS&gt;</span> <span class="tc">iwr -useb https://raw.githubusercontent.com/Naraito-ai/pc-optimizer/main/install.ps1 | iex</span></div><br>
-      <div><span class="ti">[INFO]</span> Checking administrator privileges...</div>
-      <div><span class="ts">✔</span> Running as Administrator — OK</div>
-      <div><span class="ts">✔</span> OS: Windows 11 Pro 64-bit</div><br>
-      <div><span class="tco">──────────── System Baseline ────────────</span></div>
-      <div><span class="tm">RAM Usage:   </span><span class="th">12.8 GB / 16.0 GB (80%)</span></div>
-      <div><span class="tm">Junk Found:  </span><span class="th">4.6 GB (Temp, Browser Cache, Update Logs)</span></div>
-      <div><span class="tm">Bloat Tasks: </span><span class="th">6 background processes running</span></div><br>
-      <div><span class="tp">Ready.</span> Press "Run Demo" to simulate execution.</div>
+    
+    <!-- Health score bar -->
+    <div class="gui-score-box">
+      <div class="gui-score-header">
+        <span class="gui-score-label">PC Health Score:</span>
+        <span class="gui-score-val" id="mockScoreVal">74/100</span>
+        <span class="gui-pill" id="mockPill">Good</span>
+      </div>
+      <div class="gui-bar-bg">
+        <div class="gui-bar-fill" id="mockBarFill" style="width: 74%"></div>
+      </div>
+      <div class="gui-issues" id="mockIssues">⚠️ 4.6 GB temporary junk files found • Telemetry service active</div>
+    </div>
+
+    <!-- Main Button -->
+    <button class="gui-btn-main" onclick="simulateGuiClick()">
+      🚀 Optimize My PC
+    </button>
+
+    <!-- Sub Buttons -->
+    <div class="gui-btn-grid">
+      <div class="gui-btn-sub purple">🎮 Gaming Mode</div>
+      <div class="gui-btn-sub">↩ Restore Normal</div>
+      <div class="gui-btn-sub">⏰ Schedule Weekly</div>
+    </div>
+
+    <!-- Log area -->
+    <div class="gui-log-box" id="mockLog">
+      <div>Activity Log</div>
+      <div style="color: #6b7280;">Last Run: Sunday 3:00 AM • Score: 58 → 84</div>
+      <div style="color: #00e5a0; margin-top: 4px;">Ready. Click 'Optimize My PC' for 1-click safe cleanup.</div>
     </div>
   </div>
-
-  <div class="safe-notice">
-    <div class="safe-notice-icon">🛡️</div>
-    <div class="safe-notice-text">
-      <strong>Safe by design:</strong> This tool never flushes your RAM working sets,
-      never switches to High Performance power plan, and never disables Superfetch (SysMain).
-      Those cause overheating and system hangs — so we deliberately don't do them.
-    </div>
-  </div>
-</div>
-
-<!-- STATS -->
-<div class="stats">
-  <div class="stat"><div class="stat-num">4.6 GB</div><div class="stat-label">Average Junk Cleaned</div></div>
-  <div class="stat"><div class="stat-num">3</div><div class="stat-label">Background Services Stopped</div></div>
-  <div class="stat"><div class="stat-num">&lt; 45s</div><div class="stat-label">Full Execution Time</div></div>
-  <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Free &amp; Open Source</div></div>
 </div>
 
 <!-- FEATURES -->
 <section class="section" id="features">
-  <div class="eyebrow">Core Features</div>
-  <div class="section-title">Smart, targeted optimizations only.</div>
+  <div class="eyebrow">App Features</div>
+  <div class="section-title">Built for normal users. Powered by safe tuning.</div>
   <div class="features">
     <div class="feature">
-      <div class="feat-icon">🗑️</div>
-      <div class="feat-title">Deep Junk Removal</div>
-      <div class="feat-desc">Deletes Windows Temp, System Temp, Prefetch cache, Windows Update download cache, and Chrome / Edge / Firefox browser caches.</div>
-    </div>
-    <div class="feature">
-      <div class="feat-icon">🔕</div>
-      <div class="feat-title">Telemetry Killer</div>
-      <div class="feat-desc">Stops and disables DiagTrack (Connected User Experiences &amp; Telemetry) — the background service that sends usage data to Microsoft.</div>
+      <div class="feat-icon">📊</div>
+      <div class="feat-title">Live PC Health Score</div>
+      <div class="feat-desc">Calculates your real-time system health score (0-100) based on RAM pressure, disk space, temp file size, telemetry, and startup items.</div>
     </div>
     <div class="feature">
       <div class="feat-icon">🚀</div>
-      <div class="feat-title">Startup Optimizer</div>
-      <div class="feat-desc">Scans registry startup entries and removes non-essential apps from boot. Security tools, GPU drivers, and antivirus are always protected.</div>
+      <div class="feat-title">1-Click Safe Cleanup</div>
+      <div class="feat-desc">Cleans temp files, flushes DNS, optimizes startup, disables telemetry, and tunes visual effects safely — with zero risk of system hangs.</div>
     </div>
     <div class="feature">
-      <div class="feat-icon">⚖️</div>
-      <div class="feat-title">Balanced Power Plan</div>
-      <div class="feat-desc">Ensures your PC uses the Balanced power profile — boosts CPU when needed, scales back at idle. Prevents the overheating caused by High Performance mode.</div>
+      <div class="feat-icon">🎮</div>
+      <div class="feat-title">Gaming Mode</div>
+      <div class="feat-desc">Instantly switches power plan to High Performance and disables GameDVR background recording to prevent micro-stuttering while gaming.</div>
     </div>
     <div class="feature">
-      <div class="feat-icon">🌐</div>
-      <div class="feat-title">Network Stack Reset</div>
-      <div class="feat-desc">Flushes DNS cache, resets Winsock catalog, resets IP stack, and tunes TCP auto-tuning. Fixes network issues and reduces ping after a restart.</div>
+      <div class="feat-icon">⏰</div>
+      <div class="feat-title">Weekly Scheduler</div>
+      <div class="feat-desc">One click sets up a native Windows Scheduled Task to keep your PC automatically optimized every Sunday at 3:00 AM.</div>
     </div>
     <div class="feature">
-      <div class="feat-icon">🖥️</div>
-      <div class="feat-title">Visual Effects Trim</div>
-      <div class="feat-desc">Disables Windows animations and visual transitions that waste GPU cycles — makes UI feel snappier without any visible quality loss.</div>
+      <div class="feat-icon">🛡️</div>
+      <div class="feat-title">100% Safe Guardrails</div>
+      <div class="feat-desc">No working set RAM flushing (no pagefile stuttering), no Superfetch disabling (apps launch fast), and creates a System Restore Point first.</div>
+    </div>
+    <div class="feature">
+      <div class="feat-icon">📦</div>
+      <div class="feat-title">Standalone Windows .EXE</div>
+      <div class="feat-desc">No Python installation required. Double-click <code>optimizer.exe</code>, grant admin permission, and use the desktop app window.</div>
     </div>
   </div>
 </section>
 
-<!-- SAFE BY DESIGN -->
-<section class="section" id="safe">
-  <div class="eyebrow">Safe by Design</div>
-  <div class="section-title">What this tool does — and does NOT do.</div>
-  <div class="safe-grid">
-    <div class="safe-card good">
-      <div class="safe-card-icon">✅</div>
-      <div>
-        <div class="safe-card-title">Uses Balanced Power Plan</div>
-        <div class="safe-card-desc">High Performance forces your CPU to 100% clock speed non-stop → heat → thermal throttle → lag. We use Balanced instead.</div>
-      </div>
-    </div>
-    <div class="safe-card good">
-      <div class="safe-card-icon">✅</div>
-      <div>
-        <div class="safe-card-title">Superfetch (SysMain) stays ON</div>
-        <div class="safe-card-desc">SysMain pre-loads your frequently used apps into spare RAM. Disabling it means every app launch hits the disk cold — making everything feel slower.</div>
-      </div>
-    </div>
-    <div class="safe-card good">
-      <div class="safe-card-icon">✅</div>
-      <div>
-        <div class="safe-card-title">No RAM Working Set Flush</div>
-        <div class="safe-card-desc">EmptyWorkingSet on hundreds of processes dumps RAM to the pagefile on disk — causing 5–15 minutes of disk thrashing and stuttering. We don't do this.</div>
-      </div>
-    </div>
-    <div class="safe-card good">
-      <div class="safe-card-icon">✅</div>
-      <div>
-        <div class="safe-card-title">No Registry Overclocking</div>
-        <div class="safe-card-desc">We don't touch CPU PowerThrottling or any registry keys that disable Windows' built-in thermal management.</div>
-      </div>
-    </div>
-    <div class="safe-card good">
-      <div class="safe-card-icon">✅</div>
-      <div>
-        <div class="safe-card-title">System Restore Point First</div>
-        <div class="safe-card-desc">Creates a Windows Restore Point before making any changes. If anything goes wrong, you can roll back completely.</div>
-      </div>
-    </div>
-    <div class="safe-card good">
-      <div class="safe-card-icon">✅</div>
-      <div>
-        <div class="safe-card-title">Critical Processes Protected</div>
-        <div class="safe-card-desc">svchost, lsass, winlogon, explorer, dwm and all other system-critical processes are hardcoded as untouchable.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- INSTALL -->
-<section class="section" id="install">
-  <div class="eyebrow">Installation</div>
-  <div class="section-title">Two ways to run it.</div>
+<!-- DOWNLOAD SECTION -->
+<section class="section" id="download">
+  <div class="eyebrow">Get Started</div>
+  <div class="section-title">Download PC Optimizer v2.0</div>
   <div class="install-box">
-    <div class="install-hdr">
-      <button class="tab-btn active" id="btn-ps"  onclick="switchTab('ps')">⚡ PowerShell (Recommended)</button>
-      <button class="tab-btn"        id="btn-exe" onclick="switchTab('exe')">📦 Standalone .EXE</button>
-    </div>
-
-    <!-- PowerShell tab -->
-    <div class="install-body" id="tab-ps">
-      <div class="cmd-box">
-        <div class="cmd-text" id="cmd-ps">iwr -useb https://raw.githubusercontent.com/Naraito-ai/pc-optimizer/main/install.ps1 | iex</div>
-        <button class="copy-btn" onclick="copyText('cmd-ps',this)">Copy</button>
+    <div class="cmd-box">
+      <div>
+        <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">optimizer.exe — Windows Desktop App</div>
+        <div style="font-size: 13px; color: var(--muted);">Version 2.0 • Standalone Executable • 100% Open Source</div>
       </div>
-      <ul class="steps">
-        <li><div class="step-n">1</div><span>Press <strong>Win + X</strong> → <strong>Windows PowerShell (Admin)</strong> or <strong>Terminal (Admin)</strong></span></li>
-        <li><div class="step-n">2</div><span>Paste the command above and press <strong>Enter</strong></span></li>
-        <li><div class="step-n">3</div><span>Script installs Python if needed, downloads the optimizer, and runs it automatically with <code>[AUTO]</code> mode</span></li>
-      </ul>
-      <p class="install-note" style="margin-top:16px">✅ No permanent install. Runs from a temp folder and cleans up after itself.</p>
+      <a class="dl-btn" href="/optimizer.exe">⬇ Download optimizer.exe</a>
     </div>
-
-    <!-- EXE tab -->
-    <div class="install-body" id="tab-exe" style="display:none">
-      <div class="cmd-box">
-        <div class="cmd-text">optimizer.exe — Windows x64 · No Python needed · ~9 MB</div>
-        <a class="dl-btn" href="/optimizer.exe">⬇ Download EXE</a>
-      </div>
-      <ul class="steps">
-        <li><div class="step-n">1</div><span>Click <strong>Download EXE</strong> — file saves to your Downloads folder</span></li>
-        <li><div class="step-n">2</div><span>Double-click <strong>optimizer.exe</strong> — a UAC prompt appears automatically</span></li>
-        <li><div class="step-n">3</div><span>Click <strong>Yes</strong> — a terminal opens and optimization runs fully automatically</span></li>
-      </ul>
-      <p class="install-note" style="margin-top:16px">⚠️ Windows SmartScreen may warn on first run. Click <strong>More info → Run anyway</strong>. Code is fully open-source.</p>
-    </div>
+    <ul class="steps">
+      <li><div class="step-n">1</div><span>Click <strong>Download optimizer.exe</strong> above to save the file.</span></li>
+      <li><div class="step-n">2</div><span>Double-click <strong>optimizer.exe</strong> — Windows will prompt for Administrator permission.</span></li>
+      <li><div class="step-n">3</div><span>The desktop application window opens with your PC Health Score and 1-Click buttons!</span></li>
+    </ul>
   </div>
 </section>
 
@@ -442,72 +358,30 @@
 </footer>
 
 <script>
-  /* Copy to clipboard */
-  function copyText(id, btn) {
-    const text = document.getElementById(id).textContent.trim();
-    navigator.clipboard.writeText(text).then(() => {
-      const orig = btn.textContent;
-      btn.textContent = 'Copied ✓';
-      btn.style.background = 'var(--accent)';
-      btn.style.color = '#000';
-      setTimeout(() => { btn.textContent = orig; btn.style.background = ''; btn.style.color = ''; }, 2000);
-    }).catch(() => {
-      const ta = document.createElement('textarea');
-      ta.value = text; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); document.body.removeChild(ta);
-    });
-  }
+  function simulateGuiClick() {
+    const scoreVal = document.getElementById('mockScoreVal');
+    const pill = document.getElementById('mockPill');
+    const bar = document.getElementById('mockBarFill');
+    const issues = document.getElementById('mockIssues');
+    const log = document.getElementById('mockLog');
 
-  /* Tab switch */
-  function switchTab(t) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    ['tab-ps','tab-exe'].forEach(id => document.getElementById(id).style.display = 'none');
-    document.getElementById('btn-' + t).classList.add('active');
-    document.getElementById('tab-' + t).style.display = 'block';
-  }
+    log.innerHTML = `
+      <div>Activity Log</div>
+      <div style="color: #38bdf8;">[1/5] Creating System Restore Point...</div>
+      <div style="color: #38bdf8;">[2/5] Cleaning 4.6 GB temp files & caches...</div>
+      <div style="color: #38bdf8;">[3/5] Disabling telemetry & tuning startup...</div>
+      <div style="color: #38bdf8;">[4/5] Flushing DNS & network stack...</div>
+      <div style="color: #00e5a0; margin-top: 4px;">✔ Optimization Complete! Score improved to 92/100</div>
+    `;
 
-  /* Terminal demo */
-  const LINES = [
-    {d:0,    h:`<div><span class="tco"># Starting PC Optimizer v1.0 in AUTO mode...</span></div>`},
-    {d:300,  h:`<div><span class="ti">[1/5]</span> Creating System Restore Point...</div>`},
-    {d:1000, h:`<div><span class="ts">  ✔ Restore point saved: "Before_PC_Optimizer"</span></div><br>`},
-    {d:1400, h:`<div><span class="ti">[2/5]</span> Scanning for bloatware processes...</div>`},
-    {d:1900, h:`<div><span class="tm">  [AUTO] Terminated: onedrive.exe, teams.exe, cortana.exe</span></div>`},
-    {d:2200, h:`<div><span class="ts">  ✔ Bloatware removed — RAM untouched (no pagefile flush)</span></div><br>`},
-    {d:2600, h:`<div><span class="ti">[3/5]</span> Cleaning temp files &amp; browser caches...</div>`},
-    {d:3400, h:`<div><span class="tm">  [AUTO] Cleaned: Windows\\Temp, %TEMP%, Prefetch</span></div>`},
-    {d:3700, h:`<div><span class="tm">  [AUTO] Cleared: Chrome cache, Edge cache</span></div>`},
-    {d:4000, h:`<div><span class="ts">  ✔ Freed 4.6 GB disk space</span></div><br>`},
-    {d:4400, h:`<div><span class="ti">[4/5]</span> Applying power &amp; startup optimizations...</div>`},
-    {d:5000, h:`<div><span class="tm">  [AUTO] Power plan: Balanced (CPU stays cool &amp; responsive)</span></div>`},
-    {d:5300, h:`<div><span class="tm">  [AUTO] Disabled: DiagTrack (telemetry), WSearch (indexer)</span></div>`},
-    {d:5600, h:`<div><span class="tm">  [AUTO] Kept: SecurityHealth, RtkAudUService (protected)</span></div>`},
-    {d:5900, h:`<div><span class="ts">  ✔ Power &amp; services optimized</span></div><br>`},
-    {d:6200, h:`<div><span class="ti">[5/5]</span> Flushing network stack &amp; tuning TCP...</div>`},
-    {d:6800, h:`<div><span class="tm">  [AUTO] DNS flushed · Winsock reset · IP stack reset</span></div>`},
-    {d:7100, h:`<div><span class="ts">  ✔ Network stack clean</span></div><br>`},
-    {d:7500, h:`<div><span class="tco">─────────── BEFORE vs AFTER ───────────</span></div>`},
-    {d:7700, h:`<div><span class="tm">RAM Usage:   </span><span class="th">80%</span><span class="tm"> → </span><span class="ts">80%  (unchanged — no risky flush)</span></div>`},
-    {d:7900, h:`<div><span class="tm">Disk Free:   </span><span class="th">42.1 GB</span><span class="tm"> → </span><span class="ts">46.7 GB  (+4.6 GB)</span></div>`},
-    {d:8100, h:`<div><span class="tm">CPU Load:    </span><span class="th">34%</span><span class="tm"> → </span><span class="ts">11%</span></div><br>`},
-    {d:8500, h:`<div><span class="ts">🎉 DONE. PC is cleaner. No lag. No overheating. Restart recommended for network changes.</span></div>`},
-  ];
-
-  let running = false;
-  function runDemo() {
-    if (running) return;
-    running = true;
-    const btn = document.getElementById('demoBtn');
-    btn.textContent = '⏳ Running...'; btn.disabled = true;
-    document.getElementById('termBody').innerHTML = '';
-    LINES.forEach(({d, h}) => {
-      setTimeout(() => {
-        const body = document.getElementById('termBody');
-        body.insertAdjacentHTML('beforeend', h);
-        body.scrollTop = body.scrollHeight;
-        if (d === 8500) { btn.textContent = '↺ Run Again'; btn.disabled = false; running = false; }
-      }, d);
-    });
+    setTimeout(() => {
+      scoreVal.textContent = '92/100';
+      pill.textContent = 'Excellent';
+      pill.style.background = '#00e5a0';
+      bar.style.width = '92%';
+      issues.style.color = '#00e5a0';
+      issues.textContent = '✔ System health is optimal! All safe cleanups applied.';
+    }, 600);
   }
 </script>
 </body>
