@@ -6,7 +6,7 @@
 $ErrorActionPreference = "Stop"
 
 # Define GitHub raw repository base URL
-$RAW_BASE_URL = "https://raw.githubusercontent.com/USERNAME/pc-optimizer/main"
+$RAW_BASE_URL = "https://raw.githubusercontent.com/Naraito-ai/pc-optimizer/main"
 
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "     ⚡ PC PERFORMANCE OPTIMIZER - AUTOMATED INSTALLER ⚡" -ForegroundColor Cyan

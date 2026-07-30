@@ -55,7 +55,7 @@ No manual code download required! Run the automated installer directly in PowerS
 2. Paste and run the following command:
 
 ```powershell
-iwr -useb https://raw.githubusercontent.com/USERNAME/pc-optimizer/main/install.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/Naraito-ai/pc-optimizer/main/install.ps1 | iex
 ```
 
 > **Note**: Replace `USERNAME` in the URL with your actual GitHub username once pushed.
@@ -68,7 +68,7 @@ iwr -useb https://raw.githubusercontent.com/USERNAME/pc-optimizer/main/install.p
 For end users who do not have Python installed.
 
 ### Instructions for Users:
-1. Go to the [Releases](https://github.com/USERNAME/pc-optimizer/releases) page of the GitHub repository.
+1. Go to the [Releases](https://github.com/Naraito-ai/pc-optimizer/releases) page of the GitHub repository.
 2. Download `optimizer.exe`.
 3. Right-click `optimizer.exe` and select **Run as Administrator**.
 
