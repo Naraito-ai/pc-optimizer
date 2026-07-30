@@ -1,14 +1,21 @@
 {
-  "framework": null,
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "headers": [
+  "version": 2,
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "optimizer.exe", "use": "@vercel/static" }
+  ],
+  "routes": [
     {
-      "source": "/optimizer.exe",
-      "headers": [
-        { "key": "Content-Type", "value": "application/octet-stream" },
-        { "key": "Content-Disposition", "value": "attachment; filename=\"optimizer.exe\"" }
-      ]
+      "src": "/optimizer.exe",
+      "dest": "/optimizer.exe",
+      "headers": {
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": "attachment; filename=\"optimizer.exe\""
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }
