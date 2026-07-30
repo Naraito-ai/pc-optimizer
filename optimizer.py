@@ -68,8 +68,12 @@ def is_admin() -> bool:
 def elevate_if_needed():
     """If not admin, relaunch with UAC prompt and exit."""
     if not is_admin():
-        script = sys.executable
-        params = " ".join(f'"{a}"' for a in sys.argv)
+        if getattr(sys, 'frozen', False):
+            script = sys.executable
+            params = " ".join(f'"{a}"' for a in sys.argv[1:])
+        else:
+            script = sys.executable
+            params = " ".join(f'"{a}"' for a in sys.argv)
         try:
             ret = ctypes.windll.shell32.ShellExecuteW(
                 None, "runas", script, params, None, 1
@@ -564,7 +568,7 @@ class PCOptimizerGUI:
         self.last_run_lbl.pack(side="right")
 
         self.log_area = scrolledtext.ScrolledText(
-            log_card, font=("Consolas", 9.5), bg="#0a0a0f", fg="#d1d5db",
+            log_card, font=("Consolas", 9), bg="#0a0a0f", fg="#d1d5db",
             insertbackground="#ffffff", relief="flat", highlightthickness=0
         )
         self.log_area.pack(fill="both", expand=True, padx=12, pady=(0, 12))
