@@ -1,0 +1,6 @@
+optimizer.py
+build.py
+requirements.txt
+dist/
+build/
+*.spec
