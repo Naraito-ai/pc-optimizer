@@ -9,6 +9,13 @@ import argparse
 import subprocess
 from typing import List, Tuple, Dict, Any
 
+# Fix Unicode output on Windows terminals (CP1252 codec crashes on box-drawing chars)
+if sys.stdout and hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 try:
     import psutil
     from colorama import init, Fore, Style
@@ -164,34 +171,10 @@ def get_system_metrics() -> Dict[str, Any]:
 # 1. MEMORY CLEANUP
 # ----------------------------------------------------
 def flush_standby_memory():
-    """Flush working set memory of accessible processes to free RAM."""
-    print_step_start("Flushing Process Working Sets")
-    freed_count = 0
-    try:
-        psapi = ctypes.windll.psapi
-        kernel32 = ctypes.windll.kernel32
-        PROCESS_ALL_ACCESS = 0x1F0FFF
-
-        for proc in psutil.process_iter(['pid', 'name']):
-            try:
-                pid = proc.info['pid']
-                name = (proc.info['name'] or '').lower()
-                if pid <= 4 or name in SYSTEM_CRITICAL_PROCESSES:
-                    continue
-                handle = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, pid)
-                if handle:
-                    psapi.EmptyWorkingSet(handle)
-                    kernel32.CloseHandle(handle)
-                    freed_count += 1
-            except Exception:
-                continue
-        
-        if AUTO_MODE:
-            print_auto_action(f"Flushed RAM working sets for {freed_count} processes (skipped MemCompression & system tasks)")
-        print_step_done("Flushing Process Working Sets", f"Emptied RAM working sets for {freed_count} processes")
-    except Exception as e:
-        print_warning(f"Working set flush encountered an issue: {e}")
-        print_step_skipped("Flushing Process Working Sets")
+    """Skip working set flush — EmptyWorkingSet pushes RAM to pagefile causing disk I/O hangs."""
+    print_step_start("RAM Optimization")
+    print_auto_action("Skipped working set flush (causes pagefile I/O and system hangs on HDD/low-RAM systems)")
+    print_step_done("RAM Optimization", "Bloatware scan completed — working set flush skipped for stability")
 
 def kill_bloatware_and_heavy_apps():
     print_step_start("Bloatware & Non-Essential Process Optimizer")
@@ -435,7 +418,8 @@ def optimize_services():
 
     # Services list: (service_name, display_name, reason, allow_auto)
     target_services = [
-        ("SysMain", "SysMain / Superfetch", "Preloads apps into RAM; disabling reduces disk/RAM overhead", True),
+        # SysMain removed from auto-disable: it prefetches apps into RAM — disabling it makes
+        # every app launch slower and causes disk thrashing after reboots.
         ("DiagTrack", "Connected User Experiences and Telemetry", "Disables background Windows telemetry data collection", True),
         ("WSearch", "Windows Search Indexer", "Disables file search indexing to reduce disk/CPU usage", True),
         ("PrintSpooler", "Print Spooler", "Only needed if you use a printer", False)
@@ -526,8 +510,7 @@ def main():
     print(Fore.CYAN + "\nCapturing baseline system metrics...")
     before_metrics = get_system_metrics()
 
-    # 1. Memory Cleanup
-    flush_standby_memory()
+    # 1. Memory Cleanup (working set flush removed — causes pagefile I/O hangs)
     kill_bloatware_and_heavy_apps()
 
     # 2. Temp File Cleanup
@@ -569,7 +552,7 @@ def main():
     ]
 
     headers = ["Metric", "Before", "After", "Improvement"]
-    print(Fore.WHITE + tabulate(table_data, headers=headers, tablefmt="fancy_grid"))
+    print(Fore.WHITE + tabulate(table_data, headers=headers, tablefmt="simple"))
 
     print("\n" + Fore.GREEN + Style.BRIGHT + "Optimization Complete. Your PC is now running cleaner.")
     print(Fore.YELLOW + "Note: Some network or service changes may require a system restart to take full effect.\n")
