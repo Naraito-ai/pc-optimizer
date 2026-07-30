@@ -321,30 +321,21 @@ def clean_temp_files() -> float:
 def optimize_cpu_and_power():
     print_step_start("CPU & Power Plan Optimization")
 
-    # 1. Power Plan to High Performance
+    # 1. Switch to Balanced power plan (safe for all devices including laptops)
+    # NOTE: High Performance forces CPU to 100% clock speed constantly, causing
+    # excessive heat and thermal throttling — which actually makes laptops SLOWER.
+    # Balanced boosts when needed and scales back when idle — best for all devices.
     try:
-        high_perf_guid = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
-        subprocess.run(["powercfg", "/setactive", high_perf_guid], check=True, capture_output=True)
+        balanced_guid = "SCHEME_BALANCED"
+        subprocess.run(["powercfg", "/setactive", balanced_guid], check=True, capture_output=True)
         if AUTO_MODE:
-            print_auto_action("Power plan switched to High Performance")
+            print_auto_action("Power plan set to Balanced (safe for all devices — prevents overheating)")
         else:
-            print(Fore.GREEN + "  [OK] Windows Power Plan switched to 'High Performance'")
+            print(Fore.GREEN + "  [OK] Windows Power Plan set to 'Balanced' (recommended for laptops & desktops)")
     except Exception as e:
-        print_warning(f"Could not set High Performance power plan: {e}")
+        print_warning(f"Could not set Balanced power plan: {e}")
 
-    # 2. Disable CPU Throttling via Registry
-    try:
-        key_path = r"SYSTEM\CurrentControlSet\Control\Power\PowerThrottling"
-        with winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, key_path) as key:
-            winreg.SetValueEx(key, "PowerThrottlingOff", 0, winreg.REG_DWORD, 1)
-        if AUTO_MODE:
-            print_auto_action("Disabled CPU Power Throttling in Registry")
-        else:
-            print(Fore.GREEN + "  [OK] Disabled Power Throttling in Registry")
-    except Exception as e:
-        print_warning(f"Could not update Power Throttling registry key: {e}")
-
-    # 3. Disable Visual Effects (Animations & Effects)
+    # 2. Disable Visual Effects (Animations & Effects)
     if ask_user_yn("  Optimize Windows visual effects for best performance?", default_yes=True):
         try:
             key_path = r"Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects"
