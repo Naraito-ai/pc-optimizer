@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PC Optimizer — One-click Windows performance boost</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0b;
+      --surface: #111113;
+      --surface2: #18181b;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --text: #f0f0f0;
+      --muted: #888;
+      --accent: #00e5a0;
+      --accent-dim: rgba(0,229,160,0.12);
+      --accent-border: rgba(0,229,160,0.3);
+      --warning: #f5a623;
+      --danger: #ff5c5c;
+      --font: 'Inter', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 56px;
+      background: rgba(10,10,11,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-logo-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--bg) !important;
+      background: var(--accent);
+      padding: 6px 16px;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: opacity 0.15s !important;
+    }
+
+    .nav-cta:hover { opacity: 0.85 !important; color: var(--bg) !important; }
+
+    /* HERO */
+    .hero {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 100px 2rem 80px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 28px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 600;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto 40px;
+      line-height: 1.65;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #000;
+      background: var(--accent);
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--border-strong);
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-secondary:hover { background: var(--surface2); transform: translateY(-1px); }
+
+    /* TERMINAL */
+    .terminal-wrap {
+      max-width: 680px;
+      margin: 60px auto 0;
+      padding: 0 2rem;
+    }
+
+    .terminal {
+      background: #0d0d0f;
+      border: 1px solid var(--border-strong);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .dot { width: 11px; height: 11px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+
+    .terminal-title {
+      font-size: 12px;
+      color: var(--muted);
+      margin-left: auto;
+      margin-right: auto;
+      font-family: var(--mono);
+    }
+
+    .terminal-body {
+      padding: 20px 20px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .t-prompt { color: var(--accent); }
+    .t-cmd { color: #fff; }
+    .t-comment { color: #555; }
+    .t-success { color: var(--accent); }
+    .t-info { color: #6699cc; }
+    .t-muted { color: #666; }
+
+    .copy-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .copy-cmd {
+      flex: 1;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #c5e0ff;
+      white-space: nowrap;
+      overflow-x: auto;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border-strong);
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .copy-btn:hover { color: var(--accent); border-color: var(--accent-border); }
+
+    /* STATS */
+    .stats {
+      max-width: 860px;
+      margin: 80px auto;
+      padding: 0 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .stat {
+      background: var(--surface);
+      padding: 28px 24px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* FEATURES */
+    .section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 80px 2rem;
+    }
+
+    .section-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 600;
+      letter-spacing: -0.8px;
+      color: #fff;
+      margin-bottom: 48px;
+      line-height: 1.2;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .feature {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      transition: border-color 0.2s;
+    }
+
+    .feature:hover { border-color: var(--border-strong); }
+
+    .feature-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      font-size: 17px;
+    }
+
+    .feature-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* HOW IT WORKS */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 20px;
+      padding-bottom: 36px;
+      position: relative;
+    }
+
+    .step:last-child { padding-bottom: 0; }
+
+    .step-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .step-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--accent-border);
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .step-line {
+      width: 1px;
+      flex: 1;
+      background: var(--border-strong);
+      margin-top: 8px;
+    }
+
+    .step:last-child .step-line { display: none; }
+
+    .step-content { padding-top: 6px; }
+
+    .step-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* OPTIONS */
+    .options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .option-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+    }
+
+    .option-tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+
+    .tag-a { color: var(--accent); background: var(--accent-dim); border: 1px solid var(--accent-border); }
+    .tag-b { color: var(--warning); background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.25); }
+
+    .option-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .option-desc {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 20px;
+      line-height: 1.65;
+    }
+
+    .option-cmd {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: #c5e0ff;
+      background: #0d0d0f;
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    /* SAFETY */
+    .safety-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .safety-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .safety-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+      font-size: 10px;
+      color: var(--accent);
+    }
+
+    .safety-text {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .safety-text strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* DISCLAIMER */
+    .disclaimer {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 2rem 60px;
+    }
+
+    .disclaimer-box {
+      background: rgba(255,92,92,0.06);
+      border: 1px solid rgba(255,92,92,0.2);
+      border-radius: 10px;
+      padding: 18px 20px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .disclaimer-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+
+    .disclaimer-text {
+      font-size: 13px;
+      color: #aaa;
+      line-height: 1.65;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 2rem;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .footer-text a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* MOBILE */
+    @media (max-width: 600px) {
+      nav { padding: 0 1rem; }
+      .nav-links { display: none; }
+      .hero { padding: 60px 1.5rem 50px; }
+      .section { padding: 60px 1.5rem; }
+      h1 { letter-spacing: -0.8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">
+      <span class="nav-logo-dot"></span>
+      PC Optimizer
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener">GitHub ↗</a></li>
+      <li><a class="nav-cta" href="#install">Download</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">
+      <span>⚡</span> Free & Open Source
+    </div>
+    <h1>Your PC, <span>faster</span>.<br>In one click.</h1>
+    <p class="hero-sub">
+      PC Optimizer cleans junk, kills bloat, boosts RAM, and tunes Windows for peak performance — automatically, safely, in under a minute.
+    </p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="#install">
+        ↓ Download .exe
+      </a>
+      <a class="btn-secondary" href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener">
+        View on GitHub ↗
+      </a>
+    </div>
+  </section>
+
+  <!-- TERMINAL PREVIEW -->
+  <div class="terminal-wrap">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <span class="terminal-title">PC Optimizer v1.0 — Windows PowerShell</span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-comment"># Creating system restore point...</span></div>
+        <div><span class="t-success">✔</span> <span class="t-muted">Restore point created</span></div>
+        <br>
+        <div><span class="t-info">[RUNNING]</span> <span class="t-cmd">Memory cleanup</span></div>
+        <div><span class="t-success">✔</span> <span class="t-muted">Killed 7 background processes — freed 1.4 GB RAM</span></div>
+        <div><span class="t-info">[RUNNING]</span> <span class="t-cmd">Temp file cleanup</span></div>
+        <div><span class="t-success">✔</span> <span class="t-muted">Deleted 4.2 GB of junk files</span></div>
+        <div><span class="t-info">[RUNNING]</span> <span class="t-cmd">Power plan → High Performance</span></div>
+        <div><span class="t-success">✔</span> <span class="t-muted">CPU throttling disabled</span></div>
+        <div><span class="t-info">[RUNNING]</span> <span class="t-cmd">Network stack flush</span></div>
+        <div><span class="t-success">✔</span> <span class="t-muted">DNS flushed, Winsock reset</span></div>
+        <br>
+        <div><span class="t-comment">───────────── Before vs After ─────────────</span></div>
+        <div><span class="t-muted">RAM usage   </span><span class="t-cmd">87%  →  </span><span class="t-success">52%</span></div>
+        <div><span class="t-muted">CPU load    </span><span class="t-cmd">44%  →  </span><span class="t-success">18%</span></div>
+        <div><span class="t-muted">Disk freed  </span><span class="t-cmd">     </span><span class="t-success">+5.6 GB</span></div>
+        <br>
+        <div><span class="t-success">✔ Optimization complete. Your PC is now running cleaner.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">2 GB</div>
+      <div class="stat-label">avg RAM freed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">5+ GB</div>
+      <div class="stat-label">avg disk cleaned</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">&lt;60s</div>
+      <div class="stat-label">full run time</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">0 cost</div>
+      <div class="stat-label">free forever</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="section-eyebrow">What it does</div>
+    <div class="section-title">Every optimization, automated.</div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🧠</div>
+        <div class="feature-title">Memory cleanup</div>
+        <div class="feature-desc">Flushes standby RAM, kills idle bloatware like OneDrive, Teams, Cortana, and Discord running in the background.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🗑️</div>
+        <div class="feature-title">Junk file removal</div>
+        <div class="feature-desc">Clears temp folders, browser caches (Chrome, Edge, Firefox), and leftover Windows Update files. Typically frees 1–10 GB.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">CPU & power boost</div>
+        <div class="feature-desc">Switches to High Performance power plan, disables CPU throttling, and turns off Windows animations and visual lag.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🚀</div>
+        <div class="feature-title">Startup manager</div>
+        <div class="feature-desc">Lists every app that launches at startup and lets you disable the ones you don't need — cutting boot time by 10–40 seconds.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🔧</div>
+        <div class="feature-title">Services optimizer</div>
+        <div class="feature-desc">Stops and disables non-critical Windows background services like SysMain, DiagTrack (telemetry), and WSearch.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🌐</div>
+        <div class="feature-title">Network tweaks</div>
+        <div class="feature-desc">Flushes DNS cache, resets Winsock, and tunes TCP settings for faster browsing and lower ping.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section" id="how" style="padding-top: 0;">
+    <div class="section-eyebrow">How it works</div>
+    <div class="section-title">Simple. Safe. Fast.</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">1</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Creates a restore point</div>
+          <div class="step-desc">Before touching anything, the tool automatically creates a Windows System Restore Point. One click undoes everything if needed.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">2</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Runs all optimizations</div>
+          <div class="step-desc">Memory, disk, CPU, services, startup, and network — all handled automatically in sequence. Risky operations ask for your confirmation first.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">3</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Shows you the results</div>
+          <div class="step-desc">A clean before/after report shows exactly how much RAM was freed, how much disk space was cleared, and how your CPU load changed.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-left">
+          <div class="step-num">4</div>
+          <div class="step-line"></div>
+        </div>
+        <div class="step-content">
+          <div class="step-title">Done — your PC runs cleaner</div>
+          <div class="step-desc">No restarts required for most optimizations. Noticeable difference in snappiness, boot time, and app launch speed immediately.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTALL OPTIONS -->
+  <section class="section" id="install" style="padding-top: 0;">
+    <div class="section-eyebrow">Get started</div>
+    <div class="section-title">Two ways to install.</div>
+    <div class="options">
+      <div class="option-card">
+        <div class="option-tag tag-a">Option A — Power users</div>
+        <div class="option-title">One-line install</div>
+        <div class="option-desc">Open PowerShell as Administrator and paste this. It installs Python if needed, downloads the tool, and launches it automatically.</div>
+        <div class="copy-row">
+          <div class="copy-cmd" id="cmd-a">iwr -useb https://raw.githubusercontent.com/Naraito-ai/pc-optimizer/main/install.ps1 | iex</div>
+          <button class="copy-btn" onclick="copyCmd('cmd-a', this)">Copy</button>
+        </div>
+        <p style="font-size: 12px; color: #555; margin-top: 10px;">Run PowerShell as Administrator (right-click → Run as administrator)</p>
+      </div>
+      <div class="option-card">
+        <div class="option-tag tag-b">Option B — Easy mode</div>
+        <div class="option-title">Download .exe</div>
+        <div class="option-desc">Download the standalone executable. No Python needed. Right-click and run as Administrator — one button does everything.</div>
+        <a class="btn-primary" href="https://github.com/Naraito-ai/pc-optimizer/releases/latest" target="_blank" rel="noopener" style="display: inline-flex; margin-bottom: 12px; font-size: 14px; padding: 10px 20px;">
+          ↓ Download optimizer.exe
+        </a>
+        <p style="font-size: 12px; color: #555;">If Windows shows a SmartScreen warning: click <strong style="color: #888;">More info → Run anyway</strong>. This is normal for unsigned tools.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAFETY -->
+  <section class="section" style="padding-top: 0;">
+    <div class="section-eyebrow">Safety</div>
+    <div class="section-title">Built with guardrails.</div>
+    <div class="safety-grid">
+      <div class="safety-item">
+        <div class="safety-check">✓</div>
+        <div class="safety-text"><strong>Restore point first.</strong> Creates a Windows restore point before making any changes.</div>
+      </div>
+      <div class="safety-item">
+        <div class="safety-check">✓</div>
+        <div class="safety-text"><strong>Never kills system processes.</strong> svchost, lsass, winlogon, explorer are all protected.</div>
+      </div>
+      <div class="safety-item">
+        <div class="safety-check">✓</div>
+        <div class="safety-text"><strong>Asks before risky actions.</strong> Service disables and startup removals require your confirmation.</div>
+      </div>
+      <div class="safety-item">
+        <div class="safety-check">✓</div>
+        <div class="safety-text"><strong>Safe paths only.</strong> Only deletes files from defined temp folders. Nothing else is touched.</div>
+      </div>
+      <div class="safety-item">
+        <div class="safety-check">✓</div>
+        <div class="safety-text"><strong>Open source.</strong> Every line of code is on GitHub. Read it before you run it.</div>
+      </div>
+      <div class="safety-item">
+        <div class="safety-check">✓</div>
+        <div class="safety-text"><strong>Admin check on launch.</strong> Exits cleanly with a clear message if not run as Administrator.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    <div class="disclaimer-box">
+      <div class="disclaimer-icon">⚠️</div>
+      <div class="disclaimer-text">
+        PC Optimizer works best on <strong style="color: #ccc;">Windows 10 and Windows 11</strong>. Windows 7/8 support is partial. Mac and Linux are not supported. A system restore point is created automatically, but use at your own discretion on production or work machines.
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p class="footer-text">
+      Built by <a href="https://github.com/Naraito-ai" target="_blank" rel="noopener">@Naraito-ai</a> · 
+      <a href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener">GitHub</a> · 
+      Free & open source · Windows 10/11
+    </p>
+  </footer>
+
+  <script>
+    function copyCmd(id, btn) {
+      const text = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.style.color = 'var(--accent)';
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.style.color = '';
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>
