@@ -2,7 +2,8 @@
   "version": 2,
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
-    { "src": "optimizer.exe", "use": "@vercel/static" }
+    { "src": "optimizer.exe", "use": "@vercel/static" },
+    { "src": "release_manifest.json", "use": "@vercel/static" }
   ],
   "routes": [
     {
@@ -11,6 +12,13 @@
       "headers": {
         "Content-Type": "application/octet-stream",
         "Content-Disposition": "attachment; filename=\"optimizer.exe\""
+      }
+    },
+    {
+      "src": "/release_manifest.json",
+      "dest": "/release_manifest.json",
+      "headers": {
+        "Content-Type": "application/json"
       }
     },
     {
