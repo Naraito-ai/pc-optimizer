@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import shutil
 import ctypes
 import winreg
 import glob
@@ -9,9 +8,8 @@ import json
 import argparse
 import threading
 import subprocess
-from pathlib import Path
 from datetime import datetime
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass, asdict
 from typing import List, Dict, Any, Tuple, Optional
 
 # ── Program Metadata ────────────────────────────────────────────────────────
@@ -23,17 +21,6 @@ try:
     import psutil
 except ImportError:
     MISSING_DEPS.append(("psutil", ">=5.9.0"))
-
-try:
-    from colorama import init, Fore, Style
-    init(autoreset=True)
-except ImportError:
-    MISSING_DEPS.append(("colorama", ">=0.4.6"))
-
-try:
-    from tabulate import tabulate
-except ImportError:
-    MISSING_DEPS.append(("tabulate", ">=0.9.0"))
 
 if MISSING_DEPS:
     dep_msg = (
@@ -95,6 +82,10 @@ class CleanupResult:
     locked_files_count: int
     permission_denied_count: int
     skipped_files_count: int
+
+# ── Module-Level CTypes Structure ─────────────────────────────────────────────
+class ANIMATIONINFO(ctypes.Structure):
+    _fields_ = [("cbSize", ctypes.c_uint), ("iMinAnimate", ctypes.c_int)]
 
 # ── System Constants ─────────────────────────────────────────────────────────
 SYSTEM_CRITICAL_PROCESSES = {
@@ -525,8 +516,6 @@ def optimize_power_and_visuals_log(logger=timestamped_log):
             winreg.SetValueEx(k, "MinAnimate", 0, winreg.REG_SZ, "0")
         
         SPI_SETANIMATION = 0x0043
-        class ANIMATIONINFO(ctypes.Structure):
-            _fields_ = [("cbSize", ctypes.c_uint), ("iMinAnimate", ctypes.c_int)]
         ai = ANIMATIONINFO(ctypes.sizeof(ANIMATIONINFO), 0)
         ctypes.windll.user32.SystemParametersInfoW(SPI_SETANIMATION, ctypes.sizeof(ANIMATIONINFO), ctypes.byref(ai), 3)
         ms["visual_effects"]["modified_by_optimizer"] = True
@@ -723,8 +712,6 @@ def restore_normal_mode_log(logger=timestamped_log):
                 pass
 
         SPI_SETANIMATION = 0x0043
-        class ANIMATIONINFO(ctypes.Structure):
-            _fields_ = [("cbSize", ctypes.c_uint), ("iMinAnimate", ctypes.c_int)]
         ai_val = 1 if (orig_anim == "1" or orig_anim is None) else 0
         ai = ANIMATIONINFO(ctypes.sizeof(ANIMATIONINFO), ai_val)
         try:
@@ -861,15 +848,18 @@ def toggle_weekly_schedule_log(logger=timestamped_log) -> bool:
             return False
 
 # ══════════════════════════════════════════════════════════════════════════════
-# MODERN TKINTER GUI APPLICATION
+# CLEAN SCI-FI TKINTER GUI APPLICATION
 # ══════════════════════════════════════════════════════════════════════════════
 class PCOptimizerGUI:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("⚡ PC Optimizer")
-        self.root.geometry("640x670")
-        self.root.minsize(600, 630)
-        self.root.configure(bg="#09090d")
+        self.root.geometry("680x720")
+        self.root.minsize(640, 680)
+        self.root.resizable(True, True)
+
+        self._create_styles()
+        self.root.configure(bg=self.colors["bg"])
 
         try:
             self.root.iconbitmap(default="")
@@ -879,27 +869,27 @@ class PCOptimizerGUI:
         self.state = load_state()
         self.is_running = False
 
-        self._create_styles()
         self._build_ui()
         self._update_gaming_button_state()
-        self.refresh_health_score()
+        self.root.after(150, self.refresh_health_score)
 
     def _create_styles(self):
         self.colors = {
-            "bg": "#09090d",
-            "card": "#12121a",
-            "border": "#1f1f2e",
-            "accent": "#00e5a0",
-            "accent_hover": "#00c78b",
-            "accent_dim": "#003827",
-            "gaming": "#a855f7",
-            "gaming_hover": "#9333ea",
-            "text": "#f3f4f6",
-            "muted": "#9ca3af",
-            "subtle": "#6b7280",
-            "green": "#10b981",
-            "yellow": "#f59e0b",
-            "red": "#ef4444"
+            "bg":           "#07080a",   # deep space black
+            "card":         "#0d0f14",   # slightly lighter panel
+            "card_border":  "#1a2030",   # blue-tinted border
+            "accent":       "#00d4ff",   # cyan sci-fi accent
+            "accent_hover": "#00b8e0",
+            "accent_dim":   "#003344",
+            "gaming":       "#7c3aed",   # deep violet
+            "gaming_hover": "#6d28d9",
+            "text":         "#e8edf5",
+            "muted":        "#8892a4",
+            "subtle":       "#4a5568",
+            "green":        "#00d4aa",
+            "yellow":       "#f6ad55",
+            "red":          "#fc8181",
+            "header_line":  "#0a2540",   # thin accent separator line color
         }
 
     def _update_gaming_button_state(self):
@@ -912,126 +902,192 @@ class PCOptimizerGUI:
         else:
             self.btn_gaming.config(
                 text="🎮 Gaming Mode",
-                bg="#261a38",
+                bg="#150d2a",
                 fg=self.colors["text"]
             )
 
     def _build_ui(self):
         # ── HEADER ──
-        header_frame = tk.Frame(self.root, bg=self.colors["bg"], pady=15, padx=25)
+        header_frame = tk.Frame(self.root, bg=self.colors["bg"], pady=12, padx=20)
         header_frame.pack(fill="x")
 
+        header_left = tk.Frame(header_frame, bg=self.colors["bg"])
+        header_left.pack(side="left")
+
         logo_label = tk.Label(
-            header_frame, text="⚡ PC Optimizer",
-            font=("Segoe UI", 20, "bold"), fg=self.colors["text"], bg=self.colors["bg"]
+            header_left, text="⚡ PC OPTIMIZER",
+            font=("Consolas", 18, "bold"), fg=self.colors["text"], bg=self.colors["bg"]
         )
-        logo_label.pack(side="left")
+        logo_label.pack(anchor="w")
+
+        sub_label = tk.Label(
+            header_left, text="SYSTEM PERFORMANCE SUITE",
+            font=("Consolas", 8), fg=self.colors["subtle"], bg=self.colors["bg"]
+        )
+        sub_label.pack(anchor="w", pady=(2, 0))
 
         admin_status = " (Admin)" if is_admin() else " (User Mode)"
         ver_label = tk.Label(
             header_frame, text=f"v{VERSION}{admin_status}",
-            font=("Segoe UI", 10), fg=self.colors["accent"], bg=self.colors["bg"]
+            font=("Consolas", 10), fg=self.colors["muted"], bg=self.colors["bg"]
         )
-        ver_label.pack(side="right", ipady=4)
+        ver_label.pack(side="right", anchor="e", ipady=4)
+
+        # Thin 1px horizontal separator line below header
+        sep_line = tk.Frame(self.root, height=1, bg=self.colors["header_line"])
+        sep_line.pack(fill="x")
 
         # ── MAIN CONTAINER ──
-        main_container = tk.Frame(self.root, bg=self.colors["bg"], padx=20, pady=5)
+        main_container = tk.Frame(self.root, bg=self.colors["bg"], padx=20, pady=12)
         main_container.pack(fill="both", expand=True)
 
         # ── HEALTH SCORE CARD ──
-        score_card = tk.Frame(main_container, bg=self.colors["card"], bd=1, relief="solid", highlightbackground=self.colors["border"], highlightthickness=1)
-        score_card.pack(fill="x", pady=(0, 15), ipady=15, ipadx=15)
+        score_card = tk.Frame(
+            main_container, bg=self.colors["card"], bd=0, relief="flat",
+            highlightbackground=self.colors["card_border"], highlightthickness=1
+        )
+        score_card.pack(fill="x", pady=(0, 12))
 
-        score_header = tk.Frame(score_card, bg=self.colors["card"])
-        score_header.pack(fill="x", padx=15, pady=(5, 5))
+        score_card_inner = tk.Frame(score_card, bg=self.colors["card"], padx=20, pady=12)
+        score_card_inner.pack(fill="x")
 
-        tk.Label(score_header, text="PC Health Score:", font=("Segoe UI", 12, "bold"), fg=self.colors["muted"], bg=self.colors["card"]).pack(side="left")
-        
-        self.score_val_lbl = tk.Label(score_header, text="--/100", font=("Segoe UI", 16, "bold"), fg=self.colors["accent"], bg=self.colors["card"])
-        self.score_val_lbl.pack(side="left", padx=8)
+        score_header = tk.Frame(score_card_inner, bg=self.colors["card"])
+        score_header.pack(fill="x", pady=(0, 8))
 
-        self.status_pill = tk.Label(score_header, text=" Checking... ", font=("Segoe UI", 10, "bold"), fg="#000000", bg=self.colors["green"], padx=8, pady=2)
+        tk.Label(
+            score_header, text="PC Health Score:",
+            font=("Consolas", 11, "bold"), fg=self.colors["muted"], bg=self.colors["card"]
+        ).pack(side="left")
+
+        self.score_val_lbl = tk.Label(
+            score_header, text="--/100",
+            font=("Consolas", 22, "bold"), fg=self.colors["accent"], bg=self.colors["card"]
+        )
+        self.score_val_lbl.pack(side="left", padx=10)
+
+        self.status_pill = tk.Label(
+            score_header, text=" Checking... ",
+            font=("Consolas", 9, "bold"), fg="#07080a", bg=self.colors["green"],
+            relief="flat", padx=10, pady=3
+        )
         self.status_pill.pack(side="right")
 
-        # Custom Score Bar Canvas
-        self.score_canvas = tk.Canvas(score_card, height=14, bg="#1a1a26", highlightthickness=0)
-        self.score_canvas.pack(fill="x", padx=15, pady=8)
+        # Custom Score Bar Canvas (20px height)
+        self.score_canvas = tk.Canvas(score_card_inner, height=20, bg="#0d1520", highlightthickness=0)
+        self.score_canvas.pack(fill="x", pady=8)
 
-        self.issues_lbl = tk.Label(score_card, text="Scanning system health metrics...", font=("Segoe UI", 10), fg=self.colors["subtle"], bg=self.colors["card"], anchor="w", justify="left")
-        self.issues_lbl.pack(fill="x", padx=15, pady=(2, 0))
+        self.issues_lbl = tk.Label(
+            score_card_inner, text="Scanning system health metrics...",
+            font=("Consolas", 9), fg=self.colors["subtle"], bg=self.colors["card"],
+            anchor="w", justify="left"
+        )
+        self.issues_lbl.pack(fill="x", pady=(4, 0))
 
         # ── ACTION BUTTONS CARD ──
-        btns_card = tk.Frame(main_container, bg=self.colors["card"], bd=1, relief="solid", highlightbackground=self.colors["border"], highlightthickness=1)
-        btns_card.pack(fill="x", pady=(0, 15), ipady=12, ipadx=15)
+        btns_card = tk.Frame(
+            main_container, bg=self.colors["card"], bd=0, relief="flat",
+            highlightbackground=self.colors["card_border"], highlightthickness=1
+        )
+        btns_card.pack(fill="x", pady=(0, 12))
+
+        btns_card_inner = tk.Frame(btns_card, bg=self.colors["card"], padx=20, pady=12)
+        btns_card_inner.pack(fill="x")
 
         # Big Primary Button: Optimize My PC
         self.btn_optimize = tk.Button(
-            btns_card, text="🚀  Optimize My PC",
-            font=("Segoe UI", 13, "bold"), fg="#000000", bg=self.colors["accent"],
-            activebackground=self.colors["accent_hover"], activeforeground="#000000",
-            relief="flat", cursor="hand2", pady=10, command=self.on_optimize_clicked
+            btns_card_inner, text="🚀  OPTIMIZE MY PC",
+            font=("Consolas", 12, "bold"), fg="#07080a", bg=self.colors["accent"],
+            activebackground=self.colors["accent_hover"], activeforeground="#07080a",
+            relief="flat", cursor="hand2", pady=12,
+            highlightbackground=self.colors["accent"], highlightthickness=1,
+            command=self.on_optimize_clicked
         )
-        self.btn_optimize.pack(fill="x", padx=15, pady=(5, 10))
+        self.btn_optimize.pack(fill="x", pady=(0, 10))
 
         # Secondary Button Grid (Gaming Mode, Restore, Schedule)
-        row_frame = tk.Frame(btns_card, bg=self.colors["card"])
-        row_frame.pack(fill="x", padx=15)
+        row_frame = tk.Frame(btns_card_inner, bg=self.colors["card"])
+        row_frame.pack(fill="x")
 
         self.btn_gaming = tk.Button(
             row_frame, text="🎮 Gaming Mode",
-            font=("Segoe UI", 10, "bold"), fg=self.colors["text"], bg="#261a38",
+            font=("Consolas", 9, "bold"), fg=self.colors["text"], bg="#150d2a",
             activebackground=self.colors["gaming"], activeforeground="#ffffff",
-            relief="flat", cursor="hand2", pady=7, command=self.on_gaming_clicked
+            relief="flat", cursor="hand2", pady=8, command=self.on_gaming_clicked
         )
-        self.btn_gaming.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        self.btn_gaming.pack(side="left", fill="x", expand=True, padx=(0, 4))
 
         self.btn_restore = tk.Button(
             row_frame, text="↩ Restore Normal",
-            font=("Segoe UI", 10, "bold"), fg=self.colors["text"], bg="#1f2430",
-            activebackground="#334155", activeforeground="#ffffff",
-            relief="flat", cursor="hand2", pady=7, command=self.on_restore_clicked
+            font=("Consolas", 9, "bold"), fg=self.colors["text"], bg="#0a1020",
+            activebackground="#1e293b", activeforeground="#ffffff",
+            relief="flat", cursor="hand2", pady=8, command=self.on_restore_clicked
         )
-        self.btn_restore.pack(side="left", fill="x", expand=True, padx=5)
+        self.btn_restore.pack(side="left", fill="x", expand=True, padx=4)
 
         sched_text = "⏰ Scheduled: Sun 3AM" if is_task_scheduled() else "⏰ Schedule Weekly"
         self.btn_schedule = tk.Button(
             row_frame, text=sched_text,
-            font=("Segoe UI", 10, "bold"), fg=self.colors["text"], bg="#1f2430",
-            activebackground="#334155", activeforeground="#ffffff",
-            relief="flat", cursor="hand2", pady=7, command=self.on_schedule_clicked
+            font=("Consolas", 9, "bold"), fg=self.colors["text"], bg="#0a1020",
+            activebackground="#1e293b", activeforeground="#ffffff",
+            relief="flat", cursor="hand2", pady=8, command=self.on_schedule_clicked
         )
-        self.btn_schedule.pack(side="left", fill="x", expand=True, padx=(5, 0))
+        self.btn_schedule.pack(side="left", fill="x", expand=True, padx=(4, 0))
+
+        # Hover bindings for secondary buttons using <Enter>/<Leave>
+        def _bind_hover(btn, normal_bg, hover_bg):
+            btn.bind("<Enter>", lambda e: btn.config(bg=hover_bg) if btn["state"] == "normal" else None)
+            btn.bind("<Leave>", lambda e: btn.config(bg=normal_bg) if btn["state"] == "normal" else None)
+
+        _bind_hover(self.btn_gaming, "#150d2a", self.colors["gaming_hover"])
+        _bind_hover(self.btn_restore, "#0a1020", "#162035")
+        _bind_hover(self.btn_schedule, "#0a1020", "#162035")
 
         # ── LAST RUN & LOG VIEW ──
-        log_card = tk.Frame(main_container, bg=self.colors["card"], bd=1, relief="solid", highlightbackground=self.colors["border"], highlightthickness=1)
+        log_card = tk.Frame(
+            main_container, bg=self.colors["card"], bd=0, relief="flat",
+            highlightbackground=self.colors["card_border"], highlightthickness=1
+        )
         log_card.pack(fill="both", expand=True, pady=(0, 10))
 
-        log_hdr = tk.Frame(log_card, bg=self.colors["card"])
-        log_hdr.pack(fill="x", padx=15, pady=(10, 5))
+        # 1px top border inside log card
+        log_top_border = tk.Frame(log_card, height=1, bg=self.colors["card_border"])
+        log_top_border.pack(fill="x")
 
-        tk.Label(log_hdr, text="Activity Log", font=("Segoe UI", 10, "bold"), fg=self.colors["muted"], bg=self.colors["card"]).pack(side="left")
-        
+        log_card_inner = tk.Frame(log_card, bg=self.colors["card"], padx=15, pady=10)
+        log_card_inner.pack(fill="both", expand=True)
+
+        log_hdr = tk.Frame(log_card_inner, bg=self.colors["card"])
+        log_hdr.pack(fill="x", pady=(0, 6))
+
+        tk.Label(
+            log_hdr, text="A C T I V I T Y   L O G",
+            font=("Consolas", 9, "bold"), fg=self.colors["muted"], bg=self.colors["card"]
+        ).pack(side="left")
+
         last_str = self.state.get("last_run", "Never")
         if self.state.get("last_score_before") and self.state.get("last_score_after"):
             last_str += f" • Score: {self.state['last_score_before']} → {self.state['last_score_after']}"
-        self.last_run_lbl = tk.Label(log_hdr, text=f"Last Run: {last_str}", font=("Segoe UI", 9), fg=self.colors["subtle"], bg=self.colors["card"])
+        self.last_run_lbl = tk.Label(
+            log_hdr, text=f"Last Run: {last_str}",
+            font=("Consolas", 8), fg=self.colors["subtle"], bg=self.colors["card"]
+        )
         self.last_run_lbl.pack(side="right")
 
         self.log_area = scrolledtext.ScrolledText(
-            log_card, font=("Consolas", 9), bg="#0a0a0f", fg="#d1d5db",
-            insertbackground="#ffffff", relief="flat", highlightthickness=0
+            log_card_inner, font=("Consolas", 9), bg="#060810", fg="#7ec8e3",
+            insertbackground=self.colors["accent"], relief="flat", highlightthickness=0
         )
-        self.log_area.pack(fill="both", expand=True, padx=12, pady=(0, 12))
+        self.log_area.pack(fill="both", expand=True)
         self.log("Ready. Click 'Optimize My PC' for a 1-click safe cleanup.")
 
         # Antivirus false positive notice label at bottom
         av_label = tk.Label(
             main_container,
             text="ℹ If Windows Defender flagged this file: it's a false positive common with unsigned PyInstaller apps. Source code on GitHub.",
-            font=("Segoe UI", 8), fg=self.colors["subtle"],
-            bg=self.colors["bg"], wraplength=580, justify="left"
+            font=("Consolas", 8), fg=self.colors["subtle"],
+            bg=self.colors["bg"], wraplength=620, justify="left"
         )
-        av_label.pack(fill="x", pady=(0, 8))
+        av_label.pack(fill="x", pady=(0, 4))
 
     # ── UI HELPERS ───────────────────────────────────────────────────────────
     def log(self, msg: str):
@@ -1043,13 +1099,20 @@ class PCOptimizerGUI:
 
     def draw_score_bar(self, score: int):
         self.score_canvas.delete("all")
-        w = self.score_canvas.winfo_width() or 560
-        h = 14
+        w = self.score_canvas.winfo_width() or 600
+        h = 20
         fill_w = int((score / 100) * w)
 
-        self.score_canvas.create_rectangle(0, 0, w, h, fill="#1e1e2d", width=0)
+        # Background bar
+        self.score_canvas.create_rectangle(0, 0, w, h, fill="#0d1520", width=0)
+
         color = self.colors["green"] if score >= 80 else (self.colors["yellow"] if score >= 60 else self.colors["red"])
-        self.score_canvas.create_rectangle(0, 0, fill_w, h, fill=color, width=0)
+
+        if fill_w > 0:
+            # Top-edge glow (placed at y=0, 1px taller)
+            self.score_canvas.create_rectangle(0, 0, fill_w, h, fill=self.colors["accent_dim"], width=0)
+            # Main fill bar
+            self.score_canvas.create_rectangle(0, 2, fill_w, h, fill=color, width=0)
 
     def refresh_health_score(self):
         def _calc():
@@ -1058,9 +1121,9 @@ class PCOptimizerGUI:
                 self.score_val_lbl.config(text=f"{score}/100")
                 self.status_pill.config(text=f" {status} ")
                 if status == "Excellent" or status == "Good":
-                    self.status_pill.config(bg=self.colors["green"], fg="#000000")
+                    self.status_pill.config(bg=self.colors["green"], fg="#07080a")
                 elif status == "Fair":
-                    self.status_pill.config(bg=self.colors["yellow"], fg="#000000")
+                    self.status_pill.config(bg=self.colors["yellow"], fg="#07080a")
                 else:
                     self.status_pill.config(bg=self.colors["red"], fg="#ffffff")
 
@@ -1156,6 +1219,16 @@ class PCOptimizerGUI:
             ):
                 return
             elevate_if_needed("Gaming Mode")
+            return
+
+        if not messagebox.askyesno(
+            "Confirm Gaming Mode",
+            "Gaming Mode will execute system tuning for gaming:\n\n"
+            "• Switch to High Performance power plan\n"
+            "• Disable GameDVR background video recording\n"
+            "• Terminate non-essential background bloatware processes\n\n"
+            "Activate Gaming Mode now?"
+        ):
             return
 
         self.set_running_state(True)

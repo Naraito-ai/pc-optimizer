@@ -8,16 +8,16 @@
   "security_notes": "Static ML heuristic flags (e.g. Wacatac.B!ml) are common false positives for unsigned PyInstaller single-file executables that request admin privileges. Source code is published on GitHub for complete auditability.",
   "artifacts": {
     "optimizer.exe": {
-      "size_bytes": 11661409,
-      "sha256": "26aa2b17d294cd0ab7711809f9b7ea65916f7b4b2b4a96c8de9d700e2a205c98"
+      "size_bytes": 11485406,
+      "sha256": "1f44ef33507803228d10ab6a372a33c5919e6340fa1890397f997b931ee40d44"
     },
     "optimizer-auto.exe": {
-      "size_bytes": 11666253,
-      "sha256": "59ee89e557ed69c6696dd6a34f1321f7f8109fb58441b6902434234f5932f993"
+      "size_bytes": 11489981,
+      "sha256": "3e62a95aaf7390c63502f37be0c341cf945ba727b606ab45df892693c56c770e"
     },
     "optimizer.py": {
-      "size_bytes": 56021,
-      "sha256": "77ac2f6b3939cd46d8f721ed54815402b1ade67a6fe3e4a49f08f72e631ca4cf"
+      "size_bytes": 58747,
+      "sha256": "baca71b3076b07f73b4e0a28113eb04ce83f11c21be16e15793a28bdf3583bf9"
     },
     "install.ps1": {
       "size_bytes": 3654,
