@@ -3,6 +3,7 @@
   "builds": [
     { "src": "index.html", "use": "@vercel/static" },
     { "src": "optimizer.exe", "use": "@vercel/static" },
+    { "src": "optimizer-auto.exe", "use": "@vercel/static" },
     { "src": "release_manifest.json", "use": "@vercel/static" },
     { "src": "assets/**", "use": "@vercel/static" }
   ],
@@ -13,6 +14,14 @@
       "headers": {
         "Content-Type": "application/octet-stream",
         "Content-Disposition": "attachment; filename=\"optimizer.exe\""
+      }
+    },
+    {
+      "src": "/optimizer-auto.exe",
+      "dest": "/optimizer-auto.exe",
+      "headers": {
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": "attachment; filename=\"optimizer-auto.exe\""
       }
     },
     {
