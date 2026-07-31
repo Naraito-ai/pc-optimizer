@@ -12,14 +12,16 @@ Write-Host "     ⚡ PC PERFORMANCE OPTIMIZER - SECURE INSTALLER ⚡" -Foregroun
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 1. Check Administrator Privileges
+# 1. Check Administrator Privileges (Elevation Fix for iwr | iex)
 $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 if (-not $isAdmin) {
     Write-Host "[!] Administrator privileges are required to run this application." -ForegroundColor Yellow
     Write-Host "[*] Prompting for UAC elevation..." -ForegroundColor Cyan
     
-    $scriptUrl = "$RAW_BASE_URL/install.ps1"
-    Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    $scriptContent = (Invoke-WebRequest -Uri "$RAW_BASE_URL/install.ps1" -UseBasicParsing).Content
+    $tempScript = "$env:TEMP\pc_optimizer_install.ps1"
+    $scriptContent | Out-File -FilePath $tempScript -Encoding UTF8
+    Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$tempScript`"" -Verb RunAs
     exit
 }
 
@@ -51,12 +53,11 @@ if (-not $pythonInstalled) {
     }
 }
 
-# 3. Create Temporary Workspace Directory
-$workDir = Join-Path $env:TEMP "PCOptimizerWorkspace"
-if (Test-Path $workDir) {
-    Remove-Item $workDir -Recurse -Force | Out-Null
+# 3. Create Persistent Workspace Directory (Survives Temp Cleanup)
+$workDir = "$env:LOCALAPPDATA\PCOptimizer"
+if (-not (Test-Path $workDir)) {
+    New-Item -ItemType Directory -Path $workDir -Force | Out-Null
 }
-New-Item -ItemType Directory -Path $workDir | Out-Null
 Set-Location $workDir
 
 Write-Host "[*] Workspace directory: $workDir" -ForegroundColor Cyan

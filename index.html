@@ -7,15 +7,15 @@
   <!-- Primary Meta Tags -->
   <title>PC Optimizer — Safe & Open Source Windows Performance App</title>
   <meta name="title" content="PC Optimizer — Safe & Open Source Windows Performance App" />
-  <meta name="description" content="Clean junk files, optimize startup apps safely, toggle Gaming Mode, and schedule weekly maintenance on Windows 10 & 11. Built with safe default rules and fully open source." />
-  <meta name="keywords" content="windows optimizer, pc cleaner, speed up windows, gaming mode, open source pc optimizer, safe windows tuning" />
+  <meta name="description" content="Clean junk files, optimize startup apps safely, toggle Gaming Mode, and schedule weekly maintenance on Windows 10 & 11. Opens a desktop app — no terminal knowledge needed." />
+  <meta name="keywords" content="windows optimizer, pc cleaner, speed up windows, gaming mode, open source pc optimizer, safe windows tuning, desktop gui app" />
   <meta name="author" content="Naraito-ai" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://pc-optimizer-tau.vercel.app/" />
   <meta property="og:title" content="PC Optimizer — Safe & Open Source Windows Performance App" />
-  <meta property="og:description" content="Clean desktop app for Windows 10 & 11. PC Health Score, 1-click safe cleanup, Gaming Mode, and automated weekly maintenance." />
+  <meta property="og:description" content="Opens a desktop app — no terminal knowledge needed. PC Health Score, 1-click safe cleanup, Gaming Mode, and automated weekly maintenance." />
 
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
@@ -173,10 +173,21 @@
     .trust-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 2px; }
     .trust-desc { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
 
-    /* ── GUI PREVIEW MOCKUP ── */
+    /* ── WINDOW FRAME MOCKUP ── */
     .app-preview-wrap { max-width: 720px; margin: 40px auto 0; padding: 0 1.5rem; position: relative; z-index: 2; }
+    .window-chrome {
+      background: #181824; border: 1px solid var(--border-hi); border-radius: 16px 16px 0 0;
+      padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .window-dots { display: flex; gap: 8px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red { background: #ff5f56; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green { background: #27c93f; }
+    .window-title { font-size: 13px; font-weight: 600; color: var(--muted); font-family: var(--font); }
+
     .gui-card {
-      background: #12121a; border: 1px solid var(--border-hi); border-radius: 16px;
+      background: #12121a; border: 1px solid var(--border-hi); border-top: none; border-radius: 0 0 16px 16px;
       box-shadow: 0 25px 60px rgba(0,0,0,.8), 0 0 40px rgba(0,229,160,.08);
       overflow: hidden; padding: 24px;
     }
@@ -338,11 +349,11 @@
 
 <!-- HERO -->
 <section class="hero" aria-labelledby="hero-heading">
-  <div class="hero-badge"><div class="pulse" aria-hidden="true"></div> Production Release • v2.0.0</div>
+  <div class="hero-badge"><div class="pulse" aria-hidden="true"></div> Production Release • v2.0.1</div>
   <h1 id="hero-heading">Safe, simple performance tuning<br><span class="hl">for your Windows PC.</span></h1>
   <p class="hero-sub">
-    A clean desktop app for Windows 10 &amp; 11. Monitor your PC Health Score, run safe 1-click optimization,
-    toggle Gaming Mode, and schedule weekly maintenance automatically. Open source and free.
+    Opens a desktop app — no terminal knowledge needed. Monitor your PC Health Score, run safe 1-click optimization,
+    toggle Gaming Mode, and schedule weekly maintenance automatically.
   </p>
   <div class="hero-btns">
     <a class="btn-primary" href="/optimizer.exe" aria-label="Download optimizer.exe directly">
@@ -388,12 +399,22 @@
   </div>
 </section>
 
-<!-- GUI PREVIEW INTERACTIVE DEMO -->
+<!-- GUI PREVIEW INTERACTIVE DEMO (MOCKUP OF ACTUAL DESKTOP APP WINDOW) -->
 <div class="app-preview-wrap" id="preview" aria-label="Desktop App Interface Preview">
+  <div class="window-chrome">
+    <div class="window-dots">
+      <div class="dot dot-red"></div>
+      <div class="dot dot-yellow"></div>
+      <div class="dot dot-green"></div>
+    </div>
+    <div class="window-title">⚡ PC Optimizer v2.0.1 • Safe Tuning</div>
+    <div style="width: 48px;"></div>
+  </div>
+
   <div class="gui-card">
     <div class="gui-hdr">
       <div class="gui-title">⚡ PC Optimizer</div>
-      <div class="gui-ver">Interactive Demo • v2.0.0</div>
+      <div class="gui-ver">v2.0.1 • Safe Tuning</div>
     </div>
     
     <!-- Health score bar -->
@@ -424,8 +445,8 @@
     <!-- Log area -->
     <div class="gui-log-box" id="mockLog" aria-label="Activity Log Output">
       <div>Activity Log</div>
-      <div style="color: #6b7280;">Last Run: Sunday 3:00 AM • Score: 58 → 84</div>
-      <div style="color: #00e5a0; margin-top: 4px;">Ready. Click 'Optimize My PC' for 1-click safe cleanup.</div>
+      <div style="color: #6b7280;">[19:20:00] Last Run: Sunday 3:00 AM • Score: 58 → 84</div>
+      <div style="color: #00e5a0; margin-top: 4px;">[19:20:01] Ready. Click 'Optimize My PC' for a 1-click safe cleanup.</div>
     </div>
   </div>
 </div>
@@ -433,7 +454,7 @@
 <!-- REAL APPLICATION SCREENSHOTS -->
 <div class="screenshots-wrap" id="screenshots">
   <div class="eyebrow">Application Showcase</div>
-  <div class="section-title" style="margin-bottom: 24px;">Real Screenshots</div>
+  <div class="section-title" style="margin-bottom: 24px;">Real Desktop App Screenshots</div>
   <div class="screenshots-grid">
     <div class="screenshot-card">
       <img src="/assets/screenshot1.png" alt="PC Optimizer Desktop GUI Interface" />
@@ -453,7 +474,7 @@
 <!-- FEATURES -->
 <section class="section" id="features" aria-labelledby="features-heading">
   <div class="eyebrow">App Features</div>
-  <div class="section-title" id="features-heading">Smart, targeted optimizations with safe defaults.</div>
+  <div class="section-title" id="features-heading">Desktop GUI app with 1-click actions and safe defaults.</div>
   <div class="features">
     <div class="feature">
       <div class="feat-icon" aria-hidden="true">📊</div>
@@ -473,7 +494,7 @@
     <div class="feature">
       <div class="feat-icon" aria-hidden="true">⏰</div>
       <div class="feat-title">Weekly Scheduler</div>
-      <div class="feat-desc">One click sets up a native Windows Scheduled Task to keep your PC automatically optimized every Sunday at 3:00 AM.</div>
+      <div class="feat-desc">One click sets up a native Windows Scheduled Task using optimizer-auto.exe to keep your PC automatically optimized every Sunday at 3:00 AM.</div>
     </div>
     <div class="feature">
       <div class="feat-icon" aria-hidden="true">🛡️</div>
@@ -482,8 +503,8 @@
     </div>
     <div class="feature">
       <div class="feat-icon" aria-hidden="true">📦</div>
-      <div class="feat-title">Standalone Executable</div>
-      <div class="feat-desc">No Python setup needed. Double-click <code>optimizer.exe</code>, grant admin permission, and use the desktop app window directly.</div>
+      <div class="feat-title">Standalone Desktop App</div>
+      <div class="feat-desc">No Python setup needed. Double-click <code>optimizer.exe</code>, grant admin permission, and use the desktop GUI window directly.</div>
     </div>
   </div>
 </section>
@@ -498,7 +519,7 @@
       <div class="cmd-box">
         <div>
           <div style="font-weight: 700; color: #fff; margin-bottom: 4px;">optimizer.exe — Windows Desktop App</div>
-          <div style="font-size: 13px; color: var(--muted);">Version 2.0.0 • Standalone Executable • Open Source</div>
+          <div style="font-size: 13px; color: var(--muted);">Version 2.0.1 • Standalone Executable • Open Source</div>
         </div>
         <a class="dl-btn" href="/optimizer.exe" aria-label="Download optimizer.exe standalone executable">
           ⬇ Download optimizer.exe
@@ -514,7 +535,7 @@
       <!-- SmartScreen Notice -->
       <div class="smartscreen-notice">
         <span aria-hidden="true">ℹ️</span>
-        <div>Windows SmartScreen &amp; heuristic ML scanners (e.g. Wacatac.B!ml) flag generic PyInstaller bootloaders because the file is not signed with an expensive EV code signing certificate. All 64 major signature engines (Kaspersky, BitDefender, Sophos, Symantec, Avast, ESET) report 0 detections. You can inspect the source code on GitHub.</div>
+        <div>Windows SmartScreen &amp; heuristic ML scanners (e.g. Wacatac.B!ml) flag generic PyInstaller bootloaders because the file is not signed with an expensive EV code signing certificate. All major signature engines (Kaspersky, BitDefender, Sophos, Symantec, Avast, ESET) report 0 detections. You can inspect the source code on GitHub.</div>
       </div>
     </div>
 
@@ -523,7 +544,7 @@
       <div class="meta-card">
         <div class="meta-card-title">File Details</div>
         <ul class="meta-list">
-          <li class="meta-item"><span class="meta-key">Version</span><span class="meta-val">v2.0.0</span></li>
+          <li class="meta-item"><span class="meta-key">Version</span><span class="meta-val">v2.0.1</span></li>
           <li class="meta-item"><span class="meta-key">Platform</span><span class="meta-val">Windows 10/11</span></li>
           <li class="meta-item"><span class="meta-key">File</span><span class="meta-val">optimizer.exe</span></li>
           <li class="meta-item"><span class="meta-key">License</span><span class="meta-val">MIT</span></li>
@@ -550,14 +571,14 @@
   <div class="eyebrow">Updates</div>
   <div class="section-title" id="changelog-heading">Changelog</div>
   <div class="changelog-box">
-    <div class="changelog-ver">v2.0.0 <span>• Production Architecture Release</span></div>
+    <div class="changelog-ver">v2.0.1 <span>• Maintenance &amp; Distribution Release</span></div>
     <ul class="changelog-list">
-      <li>Embedded Windows VersionInfo PE metadata to reduce antivirus heuristic false positives</li>
-      <li>True original state capture and change ownership tracking (restores only optimizer modifications)</li>
-      <li>Startup entries moved to RunDisabled subkey with original state backup (no permanent deletion)</li>
-      <li>Detailed cleanup engine reporting actual vs estimated reclaimed space and skipped locked files</li>
-      <li>Explicit user confirmation dialogs for safe optimization and restoration steps</li>
-      <li>Automated weekly task scheduler integration and desktop GUI interface</li>
+      <li>Separated GUI (optimizer.exe) and CLI (optimizer-auto.exe) builds so scheduled tasks preserve output logging without suppressing CLI stdout</li>
+      <li>Fixed install.ps1 UAC elevation bug when piped via iwr | iex</li>
+      <li>Added health score 30s calculation cache to prevent UI freezes on large temp folders</li>
+      <li>Added Gaming Mode visual indicator button state ("Gaming Mode: ON")</li>
+      <li>Added Type-Aware startup entry restoration (REG_DWORD / REG_SZ / REG_EXPAND_SZ)</li>
+      <li>Embedded Windows VersionInfo PE metadata and added antivirus false positive notice label</li>
     </ul>
   </div>
 </section>

@@ -1,27 +1,31 @@
 {
   "project": "PC Optimizer",
-  "version": "2.0.0",
-  "release_date": "2026-07-30",
+  "version": "2.0.1",
+  "release_date": "2026-07-31",
   "license": "MIT",
   "signature_status": "Unsigned (Independent Open-Source)",
   "virustotal_report": "https://www.virustotal.com/gui/file/aff8e3fea11ec763970f6055fa90cc58ef6a10f5c92baca422a6e27183a82c9f",
   "security_notes": "All major signature engines (Kaspersky, BitDefender, Sophos, Symantec, Avast, ESET) report 0 detections. Static ML heuristic flags (e.g. Wacatac.B!ml) are common false positives for unsigned PyInstaller single-file executables that request admin privileges.",
   "artifacts": {
     "optimizer.exe": {
-      "size_bytes": 11659435,
-      "sha256": "3faff91d32e99db35ef0bf0bd64b20111df3366e6d53b7eb5e1ad4992b46c3cb"
+      "size_bytes": 11660961,
+      "sha256": "50cf28dfe56f3f675d66b07061bafe463cb0d3b1f28ca1d3ecb56a1cf131cb51"
+    },
+    "optimizer-auto.exe": {
+      "size_bytes": 11664720,
+      "sha256": "4020fef85ffd8cd44c92c1becdbadea682f016989883980b6303237d4e543688"
     },
     "optimizer.py": {
-      "size_bytes": 51185,
-      "sha256": "9bbdd2cb940113b7835b0c4e1fe839b4621d18132dfba4529b723e3a97ab241f"
+      "size_bytes": 53437,
+      "sha256": "7cb2473015518b1f18ec216f89649cdc8bca9b909b3733772f8da7a284e90fb7"
     },
     "install.ps1": {
-      "size_bytes": 4505,
-      "sha256": "f5ea325c122cc720ffa282efa6506637f4f997a38b3a5bef8523b765809b738a"
+      "size_bytes": 4688,
+      "sha256": "c6e5360c5ba50e1e6120a1ed63a217319cc1da7f2ab80ded1bf1c65fdb68b7b8"
     },
     "index.html": {
-      "size_bytes": 33396,
-      "sha256": "a96a429b6f5920680a76673c2c5c87cce20a8e73f699351a3cb6c36a82ad621d"
+      "size_bytes": 34835,
+      "sha256": "3c950f80e2d2280485f09d76c74dbca15ad2157cdcda9fee52aa3e634d5cb974"
     },
     "emergency_fix.ps1": {
       "size_bytes": 3760,

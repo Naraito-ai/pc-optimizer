@@ -16,9 +16,10 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 FILES_TO_HASH = [
     "optimizer.exe",
+    "optimizer-auto.exe",
     "optimizer.py",
     "install.ps1",
     "index.html",

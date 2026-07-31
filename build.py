@@ -16,7 +16,7 @@ def check_pyinstaller():
         sys.exit(1)
 
 def build_executable():
-    """Build the standalone .exe file using PyInstaller."""
+    """Build both GUI (optimizer.exe) and CLI (optimizer-auto.exe) executables using PyInstaller."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
     optimizer_script = os.path.join(script_dir, "optimizer.py")
     version_file = os.path.join(script_dir, "version_info.txt")
@@ -26,10 +26,12 @@ def build_executable():
         sys.exit(1)
 
     print("\n============================================================")
-    print("      BUILDING PC OPTIMIZER STANDALONE EXECUTABLE")
+    print("      BUILDING PC OPTIMIZER STANDALONE EXECUTABLES")
     print("============================================================\n")
 
-    cmd = [
+    # 1. GUI Executable (optimizer.exe)
+    print("[1/2] Building Desktop GUI Executable (optimizer.exe)...")
+    cmd_gui = [
         sys.executable,
         "-m",
         "PyInstaller",
@@ -40,32 +42,56 @@ def build_executable():
         "--name",
         "optimizer"
     ]
-
     if os.path.exists(version_file):
-        cmd.extend(["--version-file", version_file])
+        cmd_gui.extend(["--version-file", version_file])
+    cmd_gui.append(optimizer_script)
 
-    cmd.append(optimizer_script)
-
-    print(f"Executing build command: {' '.join(cmd)}\n")
-    
+    print(f"Executing GUI build command: {' '.join(cmd_gui)}\n")
     try:
-        subprocess.run(cmd, check=True, cwd=script_dir)
+        subprocess.run(cmd_gui, check=True, cwd=script_dir)
     except subprocess.CalledProcessError as e:
-        print(f"\n[X] Build failed with exit code {e.returncode}")
+        print(f"\n[X] GUI Build failed with exit code {e.returncode}")
         sys.exit(e.returncode)
 
-    output_exe = os.path.join(script_dir, "dist", "optimizer.exe")
-    if os.path.exists(output_exe):
-        abs_path = os.path.abspath(output_exe)
-        file_size_mb = os.path.getsize(output_exe) / (1024 * 1024)
+    # 2. CLI Auto Executable (optimizer-auto.exe)
+    print("\n[2/2] Building Headless/Scheduled Task CLI Executable (optimizer-auto.exe)...")
+    cmd_cli = [
+        sys.executable,
+        "-m",
+        "PyInstaller",
+        "--clean",
+        "--onefile",
+        "--console",
+        "--uac-admin",
+        "--name",
+        "optimizer-auto"
+    ]
+    if os.path.exists(version_file):
+        cmd_cli.extend(["--version-file", version_file])
+    cmd_cli.append(optimizer_script)
+
+    print(f"Executing CLI build command: {' '.join(cmd_cli)}\n")
+    try:
+        subprocess.run(cmd_cli, check=True, cwd=script_dir)
+    except subprocess.CalledProcessError as e:
+        print(f"\n[X] CLI Build failed with exit code {e.returncode}")
+        sys.exit(e.returncode)
+
+    gui_exe = os.path.join(script_dir, "dist", "optimizer.exe")
+    cli_exe = os.path.join(script_dir, "dist", "optimizer-auto.exe")
+
+    if os.path.exists(gui_exe) and os.path.exists(cli_exe):
+        gui_mb = os.path.getsize(gui_exe) / (1024 * 1024)
+        cli_mb = os.path.getsize(cli_exe) / (1024 * 1024)
         print("\n============================================================")
-        print(" [+] BUILD SUCCESSFUL!")
+        print(" [+] DUAL BUILDS SUCCESSFUL!")
         print("============================================================")
-        print(f"Output Executable: {abs_path}")
-        print(f"File Size        : {file_size_mb:.2f} MB")
+        print(f"GUI  Executable: {os.path.abspath(gui_exe)} ({gui_mb:.2f} MB)")
+        print(f"CLI  Executable: {os.path.abspath(cli_exe)} ({cli_mb:.2f} MB)")
         print("\nReady for deployment and distribution via GitHub Releases!")
     else:
-        print("\n[X] Error: Build completed but output file not found in dist folder.")
+        print("\n[X] Error: Build completed but one or both output binaries missing in dist folder.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     check_pyinstaller()

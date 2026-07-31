@@ -14,11 +14,12 @@ import optimizer
 class TestPCOptimizer(unittest.TestCase):
 
     def test_version_constant(self):
-        self.assertEqual(optimizer.VERSION, "2.0.0")
+        self.assertEqual(optimizer.VERSION, "2.0.1")
 
     @patch("psutil.virtual_memory")
     @patch("psutil.disk_usage")
     def test_calculate_health_score_good(self, mock_disk, mock_ram):
+        optimizer.invalidate_health_score_cache()
         mock_ram.return_value.percent = 40.0
         mock_disk.return_value.free = 50 * (1024 ** 3)
         score, status, issues = optimizer.calculate_health_score()

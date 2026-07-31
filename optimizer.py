@@ -15,7 +15,7 @@ from dataclasses import dataclass, asdict, field
 from typing import List, Dict, Any, Tuple, Optional
 
 # ── Program Metadata ────────────────────────────────────────────────────────
-VERSION = "2.0.0"
+VERSION = "2.0.1"
 
 # ── Dependency Check ─────────────────────────────────────────────────────────
 MISSING_DEPS = []
@@ -116,7 +116,9 @@ STARTUP_PROTECTED_KEYWORDS = [
     "antivirus", "defender", "bluetooth",
 ]
 
-STATE_FILE = os.path.join(os.environ.get("APPDATA", r"C:\AppData"), "PCOptimizer", "state.json")
+# FIX 3: State File Path
+_appdata = os.environ.get("APPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Roaming")
+STATE_FILE = os.path.join(_appdata, "PCOptimizer", "state.json")
 
 # ── UAC / Admin Helpers ──────────────────────────────────────────────────────
 def is_admin() -> bool:
@@ -210,9 +212,19 @@ def save_state(data: Dict[str, Any]):
     except Exception:
         pass
 
-# ── Health Score Calculation ──────────────────────────────────────────────────
+# ── Health Score Calculation (With Caching - FIX 4) ──────────────────────────
+_health_cache = {"score": None, "ts": 0}
+
+def invalidate_health_score_cache():
+    _health_cache["score"] = None
+    _health_cache["ts"] = 0
+
 def calculate_health_score() -> Tuple[int, str, List[str]]:
-    """Calculates dynamic PC Health Score (0-100) based on real metrics."""
+    """Calculates dynamic PC Health Score (0-100) based on real metrics with 30s caching."""
+    now = time.time()
+    if _health_cache["score"] is not None and now - _health_cache["ts"] < 30:
+        return _health_cache["score"]
+
     score = 100
     issues = []
 
@@ -293,7 +305,11 @@ def calculate_health_score() -> Tuple[int, str, List[str]]:
 
     score = max(10, min(100, score))
     status = "Excellent" if score >= 85 else ("Good" if score >= 70 else ("Fair" if score >= 50 else "Poor"))
-    return score, status, issues
+    result = (score, status, issues)
+
+    _health_cache["score"] = result
+    _health_cache["ts"] = now
+    return result
 
 # ── Cleanup Engine (Planning, Dry-Run & Safe Execution) ──────────────────────
 def get_cleanup_targets(advanced_mode: bool = False) -> List[str]:
@@ -728,7 +744,7 @@ def restore_normal_mode_log(logger=timestamped_log):
     else:
         logger("  ℹ Telemetry service was not modified by optimizer — keeping existing status.")
 
-    # 5. Restore Disabled Startup Entries (Recreate in Run and delete from RunDisabled)
+    # 5. Restore Disabled Startup Entries (FIX 6: Type-Aware Restore)
     startup_entries = ms.get("startup_entries", [])
     restored_count = 0
     remaining_entries = []
@@ -737,9 +753,16 @@ def restore_normal_mode_log(logger=timestamped_log):
         if entry.get("modified_by_optimizer", False):
             try:
                 hkey = winreg.HKEY_CURRENT_USER if entry["hive"] == "HKCU" else winreg.HKEY_LOCAL_MACHINE
-                # Recreate in Run
+                # Recreate in Run with proper value_type awareness
                 with winreg.OpenKey(hkey, entry["key_path"], 0, winreg.KEY_SET_VALUE) as rk:
-                    winreg.SetValueEx(rk, entry["value_name"], 0, entry["value_type"], entry["value_data"])
+                    val_type = entry["value_type"]
+                    raw = entry["value_data"]
+                    if val_type == winreg.REG_DWORD:
+                        write_val = int(raw) if str(raw).isdigit() else 0
+                    else:
+                        write_val = str(raw)
+                    winreg.SetValueEx(rk, entry["value_name"], 0, val_type, write_val)
+
                 # Remove from RunDisabled
                 try:
                     with winreg.OpenKey(hkey, entry["disabled_key_path"], 0, winreg.KEY_SET_VALUE) as dk:
@@ -760,7 +783,7 @@ def restore_normal_mode_log(logger=timestamped_log):
 
     logger(f"✔ Restore complete. Reverted all settings modified by this application.")
 
-# ── Task Scheduler (Weekly Schedule) ──────────────────────────────────────────
+# ── Task Scheduler (Weekly Schedule - FIX 1: Uses optimizer-auto.exe) ───────
 def is_task_scheduled() -> bool:
     try:
         res = subprocess.run(["schtasks", "/query", "/tn", "PCOptimizerWeekly"], capture_output=True, text=True)
@@ -770,8 +793,15 @@ def is_task_scheduled() -> bool:
 
 def toggle_weekly_schedule_log(logger=timestamped_log) -> bool:
     scheduled = is_task_scheduled()
-    exe_path = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
     state = load_state()
+
+    if getattr(sys, 'frozen', False):
+        exe_dir = os.path.dirname(sys.executable)
+        exe_path = os.path.join(exe_dir, "optimizer-auto.exe")
+        if not os.path.exists(exe_path):
+            exe_path = sys.executable
+    else:
+        exe_path = os.path.abspath(__file__)
     
     if scheduled:
         logger("⏰ Removing weekly automatic optimization schedule...")
@@ -787,10 +817,11 @@ def toggle_weekly_schedule_log(logger=timestamped_log) -> bool:
             return True
     else:
         logger("⏰ Scheduling automatic weekly PC optimization (Every Sunday at 3:00 AM)...")
+        tr_arg = f'"{exe_path}" --auto' if getattr(sys, 'frozen', False) else f'"{sys.executable}" "{exe_path}" --auto'
         cmd = [
             "schtasks", "/create",
             "/tn", "PCOptimizerWeekly",
-            "/tr", f'"{exe_path}" --auto',
+            "/tr", tr_arg,
             "/sc", "weekly",
             "/d", "SUN",
             "/st", "03:00",
@@ -815,8 +846,8 @@ class PCOptimizerGUI:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("⚡ PC Optimizer")
-        self.root.geometry("640x660")
-        self.root.minsize(600, 620)
+        self.root.geometry("640x670")
+        self.root.minsize(600, 630)
         self.root.configure(bg="#09090d")
 
         try:
@@ -829,6 +860,7 @@ class PCOptimizerGUI:
 
         self._create_styles()
         self._build_ui()
+        self._update_gaming_button_state()
         self.refresh_health_score()
 
     def _create_styles(self):
@@ -848,6 +880,21 @@ class PCOptimizerGUI:
             "yellow": "#f59e0b",
             "red": "#ef4444"
         }
+
+    # FIX 5: Gaming mode visual button state updater
+    def _update_gaming_button_state(self):
+        if self.state.get("gaming_mode"):
+            self.btn_gaming.config(
+                text="🎮 Gaming Mode: ON",
+                bg=self.colors["gaming"],
+                fg="#ffffff"
+            )
+        else:
+            self.btn_gaming.config(
+                text="🎮 Gaming Mode",
+                bg="#261a38",
+                fg=self.colors["text"]
+            )
 
     def _build_ui(self):
         # ── HEADER ──
@@ -956,6 +1003,15 @@ class PCOptimizerGUI:
         self.log_area.pack(fill="both", expand=True, padx=12, pady=(0, 12))
         self.log("Ready. Click 'Optimize My PC' for a 1-click safe cleanup.")
 
+        # FIX 7: Antivirus false positive notice label at bottom
+        av_label = tk.Label(
+            main_container,
+            text="ℹ If Windows Defender flagged this file: it's a false positive common with unsigned PyInstaller apps. Source code on GitHub.",
+            font=("Segoe UI", 8), fg=self.colors["subtle"],
+            bg=self.colors["bg"], wraplength=580, justify="left"
+        )
+        av_label.pack(fill="x", pady=(0, 8))
+
     # ── UI HELPERS ───────────────────────────────────────────────────────────
     def log(self, msg: str):
         ts = datetime.now().strftime("%H:%M:%S")
@@ -1039,6 +1095,7 @@ class PCOptimizerGUI:
             optimize_network_log(self.log)
 
             time.sleep(1)
+            invalidate_health_score_cache()  # Force cache invalidation after optimization
             score_after, status, _ = calculate_health_score()
             self.log(f"\n🎉 OPTIMIZATION COMPLETE! Health Score: {score_before} → {score_after} ({status})")
 
@@ -1067,7 +1124,11 @@ class PCOptimizerGUI:
             enable_gaming_mode_log(self.log)
             self.state["gaming_mode"] = True
             save_state(self.state)
-            self.root.after(0, lambda: (self.refresh_health_score(), self.set_running_state(False)))
+            def _finish_gaming():
+                self._update_gaming_button_state()
+                self.refresh_health_score()
+                self.set_running_state(False)
+            self.root.after(0, _finish_gaming)
 
         threading.Thread(target=_worker, daemon=True).start()
 
@@ -1093,7 +1154,11 @@ class PCOptimizerGUI:
             restore_normal_mode_log(self.log)
             self.state["gaming_mode"] = False
             save_state(self.state)
-            self.root.after(0, lambda: (self.refresh_health_score(), self.set_running_state(False)))
+            def _finish_restore():
+                self._update_gaming_button_state()
+                self.refresh_health_score()
+                self.set_running_state(False)
+            self.root.after(0, _finish_restore)
 
         threading.Thread(target=_worker, daemon=True).start()
 

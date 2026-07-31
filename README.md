@@ -4,37 +4,29 @@ A safe, production-ready desktop performance tuning application for Windows 10 a
 
 ---
 
-## 🚀 Features Overview
+## 🚀 How to Use
 
-1. **Live PC Health Score (0–100)**
-   - Real-time scoring based on RAM pressure, C: drive free space, temporary junk files size, telemetry status, and startup apps count.
+Double-click `optimizer.exe` → Accept UAC prompt → Desktop App window opens.  
+Everything is controlled through the clean desktop interface buttons:
 
-2. **1-Click Safe Cleanup Engine**
-   - Cleans `%TEMP%`, `C:\Windows\Temp`, `C:\Windows\Prefetch`, and Chrome/Edge/Firefox browser caches.
-   - Includes dry-run estimation scanner and accurate measurement of actual reclaimed disk space.
-   - Avoids aggressive working-set RAM flushing to prevent pagefile disk thrashing and system hanging.
+| Button | What it does |
+|---|---|
+| **🚀 Optimize My PC** | Full 1-click safe cleanup &amp; system tuning |
+| **🎮 Gaming Mode** | Terminate bloatware, disable GameDVR recording |
+| **↩ Restore Normal** | Undo all changes made by this app back to original values |
+| **⏰ Schedule Weekly** | Auto-clean every Sunday at 3:00 AM using `optimizer-auto.exe` |
 
-3. **Power & Visual Effects Tuning**
-   - Configures the safe **Balanced** power plan to prevent CPU overheating and thermal throttling.
-   - Optimizes Windows visual animations for responsiveness.
+---
 
-4. **Startup Program Manager (With Registry Backup)**
-   - Audits startup items in `HKCU` and `HKLM` registry paths.
-   - Backs up registry entries (`hive`, `key`, `name`, `type`, `value_data`, `timestamp`, `app_version`) to structured state before disabling non-essential startup apps.
+## ⚙️ Advanced / Background Use (CLI)
 
-5. **Telemetry Management**
-   - Disables `DiagTrack` (Connected User Experiences & Telemetry).
-   - Preserves Start menu and file search indexing (`WSearch`).
+For automation, custom scripts, or scheduled tasks only:
 
-6. **Gaming Mode & Restoration**
-   - **Gaming Mode**: Temporarily enables High Performance power plan and disables GameDVR background recording to prevent micro-stuttering.
-   - **Restore Normal Mode**: Reverts all reversible modifications — restores Balanced power plan, GameDVR settings, telemetry startup mode, visual effects, and backed-up startup entries.
-
-7. **Automated Weekly Scheduler**
-   - One-click integration with native Windows Task Scheduler (`PCOptimizerWeekly`) running every Sunday at 3:00 AM.
-
-8. **Safety Checkpoints**
-   - Triggers a Windows **System Restore Point** (`Checkpoint-Computer`) before executing optimization steps.
+```text
+optimizer-auto.exe --auto      Full cleanup, no window
+optimizer-auto.exe --gaming    Gaming mode, no window
+optimizer-auto.exe --restore   Restore normal mode, no window
+```
 
 ---
 
@@ -77,11 +69,11 @@ pip install -r requirements-dev.txt
 python -m unittest discover tests
 ```
 
-### Building Standalone `.exe` from Source
-To compile `optimizer.exe` using PyInstaller:
+### Building Standalone Executables from Source
+To compile `optimizer.exe` (GUI) and `optimizer-auto.exe` (CLI):
 
 ```cmd
-python -m PyInstaller --clean --onefile --windowed --uac-admin --name optimizer optimizer.py
+python build.py
 ```
 
 ### Generating Release Checksums
