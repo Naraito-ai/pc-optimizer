@@ -29,7 +29,7 @@ def build_executable():
     print("      BUILDING PC OPTIMIZER STANDALONE EXECUTABLES")
     print("============================================================\n")
 
-    # 1. GUI Executable (optimizer.exe)
+    # 1. GUI Executable (optimizer.exe) - Launches un-elevated (elevates on demand)
     print("[1/2] Building Desktop GUI Executable (optimizer.exe)...")
     cmd_gui = [
         sys.executable,
@@ -38,7 +38,6 @@ def build_executable():
         "--clean",
         "--onefile",
         "--windowed",
-        "--uac-admin",
         "--name",
         "optimizer"
     ]
@@ -53,7 +52,7 @@ def build_executable():
         print(f"\n[X] GUI Build failed with exit code {e.returncode}")
         sys.exit(e.returncode)
 
-    # 2. CLI Auto Executable (optimizer-auto.exe)
+    # 2. CLI Auto Executable (optimizer-auto.exe) - Requests UAC elevation for background execution
     print("\n[2/2] Building Headless/Scheduled Task CLI Executable (optimizer-auto.exe)...")
     cmd_cli = [
         sys.executable,

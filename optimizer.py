@@ -116,45 +116,41 @@ STARTUP_PROTECTED_KEYWORDS = [
     "antivirus", "defender", "bluetooth",
 ]
 
-# FIX 3: State File Path
+# State File Path
 _appdata = os.environ.get("APPDATA") or os.path.join(os.path.expanduser("~"), "AppData", "Roaming")
 STATE_FILE = os.path.join(_appdata, "PCOptimizer", "state.json")
 
-# ── UAC / Admin Helpers ──────────────────────────────────────────────────────
+# ── UAC / Privilege Reduction Helpers (Phase 7) ─────────────────────────────
 def is_admin() -> bool:
     try:
         return ctypes.windll.shell32.IsUserAnAdmin() != 0
     except Exception:
         return False
 
-def elevate_if_needed():
-    """If not admin, relaunch with UAC prompt and exit."""
-    if not is_admin():
-        if getattr(sys, 'frozen', False):
-            script = sys.executable
-            params = " ".join(f'"{a}"' for a in sys.argv[1:])
+def elevate_if_needed(action_name: str = "this action") -> bool:
+    """Elevate via UAC prompt if not currently admin. Returns True if admin or successfully elevated."""
+    if is_admin():
+        return True
+    
+    if getattr(sys, 'frozen', False):
+        script = sys.executable
+        params = " ".join(f'"{a}"' for a in sys.argv[1:])
+    else:
+        script = sys.executable
+        params = " ".join(f'"{a}"' for a in sys.argv)
+    
+    try:
+        ret = ctypes.windll.shell32.ShellExecuteW(
+            None, "runas", script, params, None, 1
+        )
+        if ret > 32:
+            sys.exit(0) # Elevated process launched successfully
         else:
-            script = sys.executable
-            params = " ".join(f'"{a}"' for a in sys.argv)
-        try:
-            ret = ctypes.windll.shell32.ShellExecuteW(
-                None, "runas", script, params, None, 1
-            )
-            if ret <= 32:
-                try:
-                    root = tk.Tk(); root.withdraw()
-                    messagebox.showerror(
-                        "Admin Required",
-                        "PC Optimizer requires Administrator privileges to tune system settings.\n"
-                        "Please click 'Yes' on the UAC prompt."
-                    )
-                except Exception:
-                    pass
-        except Exception:
-            pass
-        sys.exit(0)
+            return False
+    except Exception:
+        return False
 
-# ── True State Management & Change Ownership Tracking ──────────────────────
+# ── True State Management & Change Ownership Tracking (Phase 5) ─────────────
 def default_state_structure() -> Dict[str, Any]:
     return {
         "version": VERSION,
@@ -190,16 +186,36 @@ def default_state_structure() -> Dict[str, Any]:
         }
     }
 
+def validate_and_migrate_state(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Ensures state dictionary has all required keys, structure, and default fallbacks."""
+    default = default_state_structure()
+    if not isinstance(data, dict):
+        return default
+    
+    # Update missing top-level keys
+    for k, v in default.items():
+        if k not in data:
+            data[k] = v
+            
+    # Ensure modified_settings sub-keys exist
+    if not isinstance(data.get("modified_settings"), dict):
+        data["modified_settings"] = default["modified_settings"]
+    else:
+        ms = data["modified_settings"]
+        def_ms = default["modified_settings"]
+        for k, v in def_ms.items():
+            if k not in ms:
+                ms[k] = v
+
+    data["version"] = VERSION
+    return data
+
 def load_state() -> Dict[str, Any]:
     try:
         if os.path.exists(STATE_FILE):
             with open(STATE_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                if "modified_settings" not in data:
-                    def_st = default_state_structure()
-                    def_st.update(data)
-                    data = def_st
-                return data
+                return validate_and_migrate_state(data)
     except Exception:
         pass
     return default_state_structure()
@@ -212,7 +228,7 @@ def save_state(data: Dict[str, Any]):
     except Exception:
         pass
 
-# ── Health Score Calculation (With Caching - FIX 4) ──────────────────────────
+# ── Health Score Calculation (With Caching - Phase 4) ────────────────────────
 _health_cache = {"score": None, "ts": 0}
 
 def invalidate_health_score_cache():
@@ -252,11 +268,13 @@ def calculate_health_score() -> Tuple[int, str, List[str]]:
     except Exception:
         pass
 
-    # 3. Temp File Junk
+    # 3. Temp File Junk (No Junction/Symlink Traversal)
     user_tmp = os.environ.get("TEMP", r"C:\Windows\Temp")
     temp_size_mb = 0
     try:
-        for root, _, files in os.walk(user_tmp, followlinks=False):
+        for root, dirs, files in os.walk(user_tmp, followlinks=False):
+            # Prune symlinked/junction directories
+            dirs[:] = [d for d in dirs if not os.path.islink(os.path.join(root, d))]
             for f in files:
                 try:
                     fp = os.path.join(root, f)
@@ -311,7 +329,7 @@ def calculate_health_score() -> Tuple[int, str, List[str]]:
     _health_cache["ts"] = now
     return result
 
-# ── Cleanup Engine (Planning, Dry-Run & Safe Execution) ──────────────────────
+# ── Cleanup Engine (Planning, Dry-Run & Safe Execution - Phase 6) ───────────
 def get_cleanup_targets(advanced_mode: bool = False) -> List[str]:
     local = os.environ.get("LOCALAPPDATA", "")
     user_tmp = os.environ.get("TEMP", "")
@@ -341,7 +359,8 @@ def estimate_cleanup_size(advanced_mode: bool = False) -> CleanupPlan:
 
     for d in targets:
         try:
-            for root, _, files in os.walk(d, followlinks=False):
+            for root, dirs, files in os.walk(d, followlinks=False):
+                dirs[:] = [sub for sub in dirs if not os.path.islink(os.path.join(root, sub))]
                 for f in files:
                     fp = os.path.join(root, f)
                     try:
@@ -379,7 +398,9 @@ def clean_temp_files_log(logger=timestamped_log, advanced_mode: bool = False) ->
 
     for d in plan.targets:
         try:
-            for root, _, files in os.walk(d, followlinks=False):
+            for root, dirs, files in os.walk(d, followlinks=False):
+                # Never traverse symlinked or junction directories
+                dirs[:] = [sub for sub in dirs if not os.path.islink(os.path.join(root, sub))]
                 for f in files:
                     fp = os.path.join(root, f)
                     try:
@@ -429,7 +450,7 @@ def clean_temp_files_log(logger=timestamped_log, advanced_mode: bool = False) ->
 
     return result
 
-# ── Restore Point ─────────────────────────────────────────────────────────────
+# ── Restore Point (Phase 2) ──────────────────────────────────────────────────
 def create_restore_point_log(logger=timestamped_log):
     logger("[1/6] Creating System Restore Point...")
     try:
@@ -515,7 +536,7 @@ def optimize_power_and_visuals_log(logger=timestamped_log):
 
     save_state(state)
 
-# ── Startup & Services Management (Disable via Move to RunDisabled) ────────
+# ── Startup & Services Management (Disable via Move to RunDisabled - Phase 4) 
 def optimize_startup_and_services_log(logger=timestamped_log):
     logger("[5/6] Tuning startup apps & background telemetry...")
     state = load_state()
@@ -744,7 +765,7 @@ def restore_normal_mode_log(logger=timestamped_log):
     else:
         logger("  ℹ Telemetry service was not modified by optimizer — keeping existing status.")
 
-    # 5. Restore Disabled Startup Entries (FIX 6: Type-Aware Restore)
+    # 5. Restore Disabled Startup Entries (Type-Aware Restore)
     startup_entries = ms.get("startup_entries", [])
     restored_count = 0
     remaining_entries = []
@@ -783,7 +804,7 @@ def restore_normal_mode_log(logger=timestamped_log):
 
     logger(f"✔ Restore complete. Reverted all settings modified by this application.")
 
-# ── Task Scheduler (Weekly Schedule - FIX 1: Uses optimizer-auto.exe) ───────
+# ── Task Scheduler (Weekly Schedule) ──────────────────────────────────────────
 def is_task_scheduled() -> bool:
     try:
         res = subprocess.run(["schtasks", "/query", "/tn", "PCOptimizerWeekly"], capture_output=True, text=True)
@@ -881,7 +902,6 @@ class PCOptimizerGUI:
             "red": "#ef4444"
         }
 
-    # FIX 5: Gaming mode visual button state updater
     def _update_gaming_button_state(self):
         if self.state.get("gaming_mode"):
             self.btn_gaming.config(
@@ -907,8 +927,9 @@ class PCOptimizerGUI:
         )
         logo_label.pack(side="left")
 
+        admin_status = " (Admin)" if is_admin() else " (User Mode)"
         ver_label = tk.Label(
-            header_frame, text=f"v{VERSION} • Safe Tuning",
+            header_frame, text=f"v{VERSION}{admin_status}",
             font=("Segoe UI", 10), fg=self.colors["accent"], bg=self.colors["bg"]
         )
         ver_label.pack(side="right", ipady=4)
@@ -1003,7 +1024,7 @@ class PCOptimizerGUI:
         self.log_area.pack(fill="both", expand=True, padx=12, pady=(0, 12))
         self.log("Ready. Click 'Optimize My PC' for a 1-click safe cleanup.")
 
-        # FIX 7: Antivirus false positive notice label at bottom
+        # Antivirus false positive notice label at bottom
         av_label = tk.Label(
             main_container,
             text="ℹ If Windows Defender flagged this file: it's a false positive common with unsigned PyInstaller apps. Source code on GitHub.",
@@ -1062,9 +1083,19 @@ class PCOptimizerGUI:
         self.btn_restore.config(state=state)
         self.btn_schedule.config(state=state)
 
-    # ── BUTTON HANDLERS ──────────────────────────────────────────────────────
+    # ── BUTTON HANDLERS (With On-Demand Elevation - Phase 7) ────────────────
     def on_optimize_clicked(self):
         if self.is_running:
+            return
+
+        if not is_admin():
+            if not messagebox.askyesno(
+                "Administrator Privilege Required",
+                "PC Optimizer requires Administrator privileges to modify system settings and perform safe optimization.\n\n"
+                "Would you like to relaunch with Administrator privileges?"
+            ):
+                return
+            elevate_if_needed("safe optimization")
             return
         
         # Confirmation prompt for safe optimization
@@ -1117,6 +1148,16 @@ class PCOptimizerGUI:
     def on_gaming_clicked(self):
         if self.is_running:
             return
+        if not is_admin():
+            if not messagebox.askyesno(
+                "Administrator Privilege Required",
+                "Gaming Mode requires Administrator privileges to adjust power plans and GameDVR settings.\n\n"
+                "Would you like to relaunch with Administrator privileges?"
+            ):
+                return
+            elevate_if_needed("Gaming Mode")
+            return
+
         self.set_running_state(True)
         self.log("\n🎮 Activating Gaming Mode...")
 
@@ -1135,6 +1176,16 @@ class PCOptimizerGUI:
     def on_restore_clicked(self):
         if self.is_running:
             return
+        if not is_admin():
+            if not messagebox.askyesno(
+                "Administrator Privilege Required",
+                "Restoring Normal Mode requires Administrator privileges to revert system settings.\n\n"
+                "Would you like to relaunch with Administrator privileges?"
+            ):
+                return
+            elevate_if_needed("Restore Normal Mode")
+            return
+
         if not messagebox.askyesno(
             "Confirm Restore Normal Mode",
             "This will revert all settings modified by PC Optimizer back to their ORIGINAL captured values.\n\n"
@@ -1165,6 +1216,16 @@ class PCOptimizerGUI:
     def on_schedule_clicked(self):
         if self.is_running:
             return
+        if not is_admin():
+            if not messagebox.askyesno(
+                "Administrator Privilege Required",
+                "Task Scheduler integration requires Administrator privileges.\n\n"
+                "Would you like to relaunch with Administrator privileges?"
+            ):
+                return
+            elevate_if_needed("Task Scheduler integration")
+            return
+
         self.set_running_state(True)
 
         def _worker():
@@ -1201,24 +1262,28 @@ def run_cli_auto():
 # ENTRY POINT
 # ══════════════════════════════════════════════════════════════════════════════
 def main():
-    elevate_if_needed()
-
     parser = argparse.ArgumentParser(description=f"PC Performance Optimizer v{VERSION}")
     parser.add_argument("--auto", action="store_true", help="Run full optimization headlessly")
     parser.add_argument("--gaming", action="store_true", help="Activate gaming mode headlessly")
     parser.add_argument("--restore", action="store_true", help="Restore normal mode headlessly")
     args, _ = parser.parse_known_args()
 
-    if args.auto:
-        run_cli_auto()
-        sys.exit(0)
-    elif args.gaming:
-        enable_gaming_mode_log()
-        sys.exit(0)
-    elif args.restore:
-        restore_normal_mode_log()
-        sys.exit(0)
+    # CLI modes require admin elevation if not present
+    if args.auto or args.gaming or args.restore:
+        if not is_admin():
+            elevate_if_needed("CLI mode execution")
+        
+        if args.auto:
+            run_cli_auto()
+            sys.exit(0)
+        elif args.gaming:
+            enable_gaming_mode_log()
+            sys.exit(0)
+        elif args.restore:
+            restore_normal_mode_log()
+            sys.exit(0)
 
+    # Launch GUI in un-elevated mode cleanly
     root = tk.Tk()
     app = PCOptimizerGUI(root)
     root.mainloop()

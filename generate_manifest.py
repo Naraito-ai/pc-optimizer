@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Release Manifest & Checksum Generator for PC Optimizer
-Generates release_manifest.json containing version info, file hashes, and security metadata.
+Release Manifest & Checksum Generator for PC Optimizer (Phase 12)
+Generates release_manifest.json and SHA256SUMS.txt containing version info, file hashes, and security metadata.
 """
 
 import os
@@ -40,14 +40,18 @@ def calculate_sha256(filepath: str) -> str:
 def generate_manifest():
     root_dir = os.path.dirname(os.path.abspath(__file__))
     artifacts = {}
+    sums_lines = []
 
     for fname in FILES_TO_HASH:
         fpath = os.path.join(root_dir, fname)
         if os.path.exists(fpath):
+            sha = calculate_sha256(fpath)
+            size = os.path.getsize(fpath)
             artifacts[fname] = {
-                "size_bytes": os.path.getsize(fpath),
-                "sha256": calculate_sha256(fpath)
+                "size_bytes": size,
+                "sha256": sha
             }
+            sums_lines.append(f"{sha}  {fname}")
 
     manifest = {
         "project": "PC Optimizer",
@@ -56,7 +60,7 @@ def generate_manifest():
         "license": "MIT",
         "signature_status": "Unsigned (Independent Open-Source)",
         "virustotal_report": "https://www.virustotal.com/gui/file/aff8e3fea11ec763970f6055fa90cc58ef6a10f5c92baca422a6e27183a82c9f",
-        "security_notes": "All major signature engines (Kaspersky, BitDefender, Sophos, Symantec, Avast, ESET) report 0 detections. Static ML heuristic flags (e.g. Wacatac.B!ml) are common false positives for unsigned PyInstaller single-file executables that request admin privileges.",
+        "security_notes": "Static ML heuristic flags (e.g. Wacatac.B!ml) are common false positives for unsigned PyInstaller single-file executables that request admin privileges. Source code is published on GitHub for complete auditability.",
         "artifacts": artifacts
     }
 
@@ -64,7 +68,12 @@ def generate_manifest():
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
+    sums_path = os.path.join(root_dir, "SHA256SUMS.txt")
+    with open(sums_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(sums_lines) + "\n")
+
     print(f"[OK] Release manifest generated successfully: {manifest_path}")
+    print(f"[OK] SHA256SUMS.txt generated successfully: {sums_path}")
 
 if __name__ == "__main__":
     generate_manifest()

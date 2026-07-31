@@ -1,5 +1,6 @@
 """
-Comprehensive Unit Tests for PC Optimizer (Mocks only - zero system mutation).
+Comprehensive Unit Test Suite for PC Optimizer (Phase 13).
+Zero system mutation - 100% mocked Windows calls.
 """
 
 import os
@@ -10,8 +11,12 @@ from unittest.mock import patch, MagicMock, mock_open
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import optimizer
+import generate_manifest
 
 class TestPCOptimizer(unittest.TestCase):
+
+    def setUp(self):
+        optimizer.invalidate_health_score_cache()
 
     def test_version_constant(self):
         self.assertEqual(optimizer.VERSION, "2.0.1")
@@ -19,7 +24,6 @@ class TestPCOptimizer(unittest.TestCase):
     @patch("psutil.virtual_memory")
     @patch("psutil.disk_usage")
     def test_calculate_health_score_good(self, mock_disk, mock_ram):
-        optimizer.invalidate_health_score_cache()
         mock_ram.return_value.percent = 40.0
         mock_disk.return_value.free = 50 * (1024 ** 3)
         score, status, issues = optimizer.calculate_health_score()
@@ -39,6 +43,12 @@ class TestPCOptimizer(unittest.TestCase):
         state = optimizer.load_state()
         self.assertEqual(state["last_run"], "Never")
         self.assertIn("modified_settings", state)
+
+    def test_validate_and_migrate_state_legacy(self):
+        legacy_data = {"version": "1.0.0", "last_run": "Yesterday"}
+        migrated = optimizer.validate_and_migrate_state(legacy_data)
+        self.assertEqual(migrated["version"], "2.0.1")
+        self.assertIn("modified_settings", migrated)
 
     @patch("os.makedirs")
     @patch("builtins.open", new_callable=mock_open)
@@ -102,6 +112,13 @@ class TestPCOptimizer(unittest.TestCase):
             calls = [c[0][0] for c in mock_subproc.call_args_list if len(c[0]) > 0 and isinstance(c[0][0], list)]
             diagtrack_calls = [c for c in calls if "DiagTrack" in c]
             self.assertEqual(len(diagtrack_calls), 0)
+
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("os.path.exists", return_value=True)
+    @patch("os.path.getsize", return_value=1024)
+    def test_manifest_generation(self, mock_size, mock_exists, mock_file):
+        generate_manifest.generate_manifest()
+        mock_file.assert_called()
 
 if __name__ == "__main__":
     unittest.main()
