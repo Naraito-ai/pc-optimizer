@@ -1,7 +1,7 @@
 {
   "project": "PC Optimizer",
   "version": "2.0.1",
-  "release_date": "2026-07-31",
+  "release_date": "2026-08-01",
   "license": "MIT",
   "signature_status": "Unsigned (Independent Open-Source)",
   "virustotal_report": "https://www.virustotal.com/gui/file/aff8e3fea11ec763970f6055fa90cc58ef6a10f5c92baca422a6e27183a82c9f",
@@ -24,8 +24,8 @@
       "sha256": "c6e5360c5ba50e1e6120a1ed63a217319cc1da7f2ab80ded1bf1c65fdb68b7b8"
     },
     "index.html": {
-      "size_bytes": 34835,
-      "sha256": "3c950f80e2d2280485f09d76c74dbca15ad2157cdcda9fee52aa3e634d5cb974"
+      "size_bytes": 46072,
+      "sha256": "d7b65570e8d6cedbf36c0c9e424725d0a699f3dbb57a08ac09fb1338794d4f09"
     },
     "emergency_fix.ps1": {
       "size_bytes": 3760,
