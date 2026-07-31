@@ -5,30 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Primary Meta Tags -->
-  <title>PC Optimizer — Open Source & Safe Windows Performance App</title>
-  <meta name="title" content="PC Optimizer — Open Source & Safe Windows Performance App" />
-  <meta name="description" content="Clean junk files, optimize startup apps safely, toggle Gaming Mode, and schedule weekly maintenance on Windows 10 & 11. Native desktop GUI app with 1-click safe tuning." />
-  <meta name="keywords" content="windows optimizer, pc cleaner, speed up windows, gaming mode, open source pc optimizer, safe windows tuning, desktop gui app" />
+  <title>PC Optimizer — Official Open Source Windows Performance App (v2.0.1)</title>
+  <meta name="title" content="PC Optimizer — Official Open Source Windows Performance App (v2.0.1)" />
+  <meta name="description" content="Official open-source performance tuning app for Windows 10 & 11 (64-bit). Real-time PC Health Score, safe 1-click cleanup, Gaming Mode, weekly maintenance scheduler, and true original state restoration." />
+  <meta name="keywords" content="pc optimizer, windows optimizer, open source pc cleaner, gaming mode windows, windows startup optimizer, safe pc tuner, standalone exe optimizer" />
   <meta name="author" content="Naraito-ai" />
+  <link rel="canonical" href="https://pc-optimizer-tau.vercel.app/" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://pc-optimizer-tau.vercel.app/" />
-  <meta property="og:title" content="PC Optimizer — Open Source & Safe Windows Performance App" />
-  <meta property="og:description" content="Native desktop GUI app for Windows 10 & 11. PC Health Score, 1-click safe cleanup, Gaming Mode, and automated weekly maintenance." />
+  <meta property="og:title" content="PC Optimizer — Official Open Source Windows Performance App" />
+  <meta property="og:description" content="Transparent, reversible, open-source Windows utility. PC Health Score, safe 1-click cleanup, Gaming Mode, weekly maintenance, and original state restoration." />
+  <meta property="og:image" content="https://pc-optimizer-tau.vercel.app/assets/screenshot1.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://pc-optimizer-tau.vercel.app/" />
+  <meta property="twitter:title" content="PC Optimizer — Open Source Windows Tuning Utility" />
+  <meta property="twitter:description" content="Safe, simple, open-source performance tuning for Windows 10 & 11. Standalone executable with full restore capability." />
+  <meta property="twitter:image" content="https://pc-optimizer-tau.vercel.app/assets/screenshot1.png" />
 
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
 
-  <!-- Fonts -->
+  <!-- Preconnect & Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
+  <!-- Structured Data / JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "PC Optimizer",
+    "operatingSystem": "Windows 10, Windows 11",
+    "applicationCategory": "UtilitiesApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "softwareVersion": "2.0.1",
+    "license": "https://opensource.org/licenses/MIT",
+    "downloadUrl": "https://pc-optimizer-tau.vercel.app/optimizer.exe",
+    "author": {
+      "@type": "Organization",
+      "name": "Naraito-ai",
+      "url": "https://github.com/Naraito-ai"
+    }
+  }
+  </script>
+
   <style>
     /* ── DESIGN SYSTEM TOKENS ── */
     :root {
-      /* Palette */
       --bg: #08090a;
       --surface-1: #0f1012;
       --surface-2: #16181c;
@@ -56,29 +88,33 @@
       --warning: #f59e0b;
       --danger: #f43f5e;
       
-      /* Typography */
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
       
-      /* Radii */
       --radius-sm: 6px;
       --radius-md: 10px;
       --radius-lg: 16px;
       --radius-xl: 24px;
       --radius-full: 9999px;
       
-      /* Transitions */
       --tr-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
       --tr-normal: 250ms cubic-bezier(0.16, 1, 0.3, 1);
-      --tr-slow: 350ms cubic-bezier(0.16, 1, 0.3, 1);
       
-      /* Shadows */
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
       --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
       --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 32px var(--accent-glow);
     }
 
-    /* ── BASE STYLES & RESET ── */
+    /* Accessibility: Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html {
@@ -93,11 +129,27 @@
       font-size: 15px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
       overflow-x: hidden;
     }
 
-    /* Ambient Background Mesh */
+    /* Skip Link */
+    .skip-link {
+      position: absolute;
+      top: -100px;
+      left: 16px;
+      background: var(--accent);
+      color: #061a12;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 14px;
+      z-index: 1000;
+      text-decoration: none;
+      transition: top var(--tr-fast);
+    }
+    .skip-link:focus { top: 16px; }
+
+    /* Background Ambient Mesh */
     body::before {
       content: '';
       position: fixed;
@@ -112,25 +164,13 @@
       filter: blur(80px);
     }
 
-    /* Grid Overlay */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-      background-size: 32px 32px;
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.4;
-    }
-
-    /* Focus State Accessibility */
+    /* Focus Ring Accessibility */
     :focus-visible {
       outline: 2px solid var(--accent);
       outline-offset: 3px;
     }
 
-    /* ── TYPOGRAPHY UTILITIES ── */
+    /* Typography */
     h1, h2, h3, h4 { color: #ffffff; letter-spacing: -0.025em; font-weight: 700; }
     
     .text-gradient {
@@ -169,7 +209,7 @@
       50% { opacity: 0.3; transform: scale(1.3); }
     }
 
-    /* ── BUTTON SYSTEM ── */
+    /* Button Component System */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -186,6 +226,7 @@
       transition: all var(--tr-fast);
       white-space: nowrap;
       user-select: none;
+      min-height: 44px; /* Accessible Touch Target */
     }
 
     .btn-primary {
@@ -193,7 +234,6 @@
       color: #061a12;
       box-shadow: 0 2px 12px var(--accent-glow);
     }
-
     .btn-primary:hover {
       background: var(--accent-hover);
       transform: translateY(-1px);
@@ -205,24 +245,13 @@
       color: var(--text-primary);
       border-color: var(--border-hi);
     }
-
     .btn-secondary:hover {
       background: var(--surface-3);
       border-color: rgba(255, 255, 255, 0.25);
       transform: translateY(-1px);
     }
 
-    .btn-ghost {
-      background: transparent;
-      color: var(--text-secondary);
-    }
-
-    .btn-ghost:hover {
-      color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    /* ── LAYOUT CONTAINERS ── */
+    /* Layout Containers */
     .container {
       width: 100%;
       max-width: 1140px;
@@ -232,9 +261,7 @@
       z-index: 1;
     }
 
-    .section {
-      padding: 96px 0;
-    }
+    .section { padding: 96px 0; }
 
     .section-header {
       text-align: center;
@@ -254,13 +281,13 @@
       line-height: 1.6;
     }
 
-    /* ── NAVIGATION BAR ── */
+    /* Navbar */
     nav.navbar {
       position: sticky;
       top: 0;
       z-index: 100;
       height: 64px;
-      background: rgba(8, 9, 10, 0.8);
+      background: rgba(8, 9, 10, 0.85);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
@@ -298,7 +325,7 @@
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 32px;
+      gap: 28px;
       list-style: none;
     }
 
@@ -308,13 +335,27 @@
       font-weight: 500;
       text-decoration: none;
       transition: color var(--tr-fast);
+      padding: 6px 0;
+      position: relative;
     }
 
-    .nav-links a:hover {
+    .nav-links a:hover,
+    .nav-links a.active {
       color: var(--text-primary);
     }
 
-    /* ── HERO SECTION ── */
+    .nav-links a.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* Hero Section */
     .hero {
       padding: 96px 0 64px;
       text-align: center;
@@ -333,7 +374,7 @@
     .hero-sub {
       font-size: clamp(1.1rem, 2vw, 1.25rem);
       color: var(--text-secondary);
-      max-width: 660px;
+      max-width: 680px;
       margin: 0 auto 40px;
       line-height: 1.65;
     }
@@ -347,7 +388,7 @@
       margin-bottom: 48px;
     }
 
-    /* ── TRUST PILLARS GRID ── */
+    /* Trust Pillars Grid */
     .trust-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -398,10 +439,8 @@
       line-height: 1.45;
     }
 
-    /* ── INTERACTIVE WINDOW PREVIEW MOCKUP ── */
-    .preview-section {
-      padding: 32px 0 96px;
-    }
+    /* Interactive Desktop App Preview Frame */
+    .preview-section { padding: 32px 0 96px; }
 
     .app-window-frame {
       max-width: 760px;
@@ -422,17 +461,8 @@
       justify-content: space-between;
     }
 
-    .window-controls {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .win-dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-    }
+    .window-controls { display: flex; align-items: center; gap: 8px; }
+    .win-dot { width: 11px; height: 11px; border-radius: 50%; }
     .win-dot.red { background: #ff5f56; }
     .win-dot.yellow { background: #ffbd2e; }
     .win-dot.green { background: #27c93f; }
@@ -444,9 +474,7 @@
       font-family: var(--font-sans);
     }
 
-    .window-body {
-      padding: 24px;
-    }
+    .window-body { padding: 24px; }
 
     .app-header {
       display: flex;
@@ -475,7 +503,6 @@
       border-radius: var(--radius-full);
     }
 
-    /* Score Gauge inside App Window */
     .gauge-card {
       background: #090a0d;
       border: 1px solid var(--border);
@@ -547,6 +574,7 @@
       gap: 10px;
       transition: all var(--tr-fast);
       box-shadow: 0 4px 16px var(--accent-glow);
+      min-height: 44px;
     }
 
     .gui-main-btn:hover {
@@ -605,7 +633,7 @@
       line-height: 1.6;
     }
 
-    /* ── SCREENSHOTS SHOWCASE ── */
+    /* Screenshots Showcase & Lightbox Modal */
     .screenshots-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -618,6 +646,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       overflow: hidden;
+      cursor: pointer;
       transition: all var(--tr-normal);
     }
 
@@ -643,7 +672,75 @@
       text-align: center;
     }
 
-    /* ── FEATURE CARDS GRID ── */
+    /* Lightbox Modal Overlay */
+    .lightbox-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--tr-normal);
+    }
+
+    .lightbox-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .lightbox-content {
+      max-width: 1000px;
+      width: 100%;
+      background: var(--surface-1);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .lightbox-content img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .lightbox-caption {
+      padding: 16px 20px;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--border-hi);
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--tr-fast);
+    }
+    .lightbox-close:hover { background: rgba(0, 0, 0, 0.9); }
+
+    /* Features Grid */
     .features-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -690,7 +787,46 @@
       line-height: 1.65;
     }
 
-    /* ── DOWNLOAD & METADATA SECTION ── */
+    .feature-meta-tag {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-bd);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Security Section Panel */
+    .security-panel {
+      background: var(--surface-1);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    .sec-item-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sec-item-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Download & Side Metadata */
     .download-card-grid {
       display: grid;
       grid-template-columns: 1.8fr 1fr;
@@ -704,28 +840,41 @@
       padding: 36px;
     }
 
-    .download-banner {
+    .download-option {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 20px 24px;
+      border-radius: var(--radius-md);
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 20px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      padding: 24px;
-      border-radius: var(--radius-md);
-      margin-bottom: 28px;
+      gap: 16px;
     }
 
-    .download-banner-title {
-      font-size: 16px;
+    .download-opt-title {
+      font-size: 15px;
       font-weight: 700;
       color: var(--text-primary);
       margin-bottom: 4px;
     }
 
-    .download-banner-sub {
-      font-size: 13px;
+    .download-opt-sub {
+      font-size: 12.5px;
       color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .hash-code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      background: #060709;
+      border: 1px solid var(--border-subtle);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      word-break: break-all;
+      margin-top: 6px;
     }
 
     .step-list {
@@ -733,6 +882,7 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+      margin-top: 24px;
     }
 
     .step-item {
@@ -773,17 +923,7 @@
       gap: 12px;
     }
 
-    .notice-icon {
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    /* Sidebar Metadata Cards */
-    .sidebar-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+    .sidebar-stack { display: flex; flex-direction: column; gap: 20px; }
 
     .meta-panel {
       background: var(--surface-1);
@@ -801,37 +941,14 @@
       margin-bottom: 16px;
     }
 
-    .meta-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    .meta-table { width: 100%; border-collapse: collapse; }
+    .meta-table tr { border-bottom: 1px solid var(--border-subtle); }
+    .meta-table tr:last-child { border-bottom: none; }
+    .meta-table td { padding: 10px 0; font-size: 13.5px; }
+    .meta-label { color: var(--text-muted); }
+    .meta-val { color: var(--text-primary); font-weight: 600; text-align: right; font-family: var(--font-mono); font-size: 12.5px; }
 
-    .meta-table tr {
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .meta-table tr:last-child {
-      border-bottom: none;
-    }
-
-    .meta-table td {
-      padding: 10px 0;
-      font-size: 13.5px;
-    }
-
-    .meta-label {
-      color: var(--text-muted);
-    }
-
-    .meta-val {
-      color: var(--text-primary);
-      font-weight: 600;
-      text-align: right;
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-    }
-
-    /* ── CHANGELOG SECTION ── */
+    /* Changelog Panel */
     .changelog-panel {
       background: var(--surface-1);
       border: 1px solid var(--border);
@@ -855,36 +972,12 @@
       font-weight: 400;
     }
 
-    .changelog-items {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    .changelog-items { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .changelog-items li { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: var(--text-secondary); }
+    .changelog-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-top: 8px; flex-shrink: 0; }
 
-    .changelog-items li {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-
-    .changelog-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      margin-top: 8px;
-      flex-shrink: 0;
-    }
-
-    /* ── FAQ ACCORDION GRID ── */
-    .faq-grid {
-      display: grid;
-      gap: 16px;
-    }
-
+    /* FAQ Cards */
+    .faq-grid { display: grid; gap: 16px; }
     .faq-card {
       background: var(--surface-1);
       border: 1px solid var(--border);
@@ -892,25 +985,11 @@
       padding: 24px;
       transition: border-color var(--tr-fast);
     }
+    .faq-card:hover { border-color: var(--border-hi); }
+    .faq-question { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; }
+    .faq-answer { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
 
-    .faq-card:hover {
-      border-color: var(--border-hi);
-    }
-
-    .faq-question {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 10px;
-    }
-
-    .faq-answer {
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    /* ── FOOTER ── */
+    /* Footer */
     footer.site-footer {
       border-top: 1px solid var(--border);
       padding: 48px 0;
@@ -919,36 +998,30 @@
       color: var(--text-muted);
       font-size: 14px;
     }
+    footer.site-footer a { color: var(--accent); text-decoration: none; transition: color var(--tr-fast); }
+    footer.site-footer a:hover { text-decoration: underline; }
 
-    footer.site-footer a {
-      color: var(--accent);
-      text-decoration: none;
-      transition: color var(--tr-fast);
-    }
-
-    footer.site-footer a:hover {
-      text-decoration: underline;
-    }
-
-    /* ── RESPONSIVE BREAKPOINTS ── */
+    /* Responsive Breakpoints */
     @media (max-width: 900px) {
-      .download-card-grid {
-        grid-template-columns: 1fr;
-      }
+      .download-card-grid { grid-template-columns: 1fr; }
+      .security-panel { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 640px) {
       .nav-links { display: none; }
       .hero { padding: 64px 0 32px; }
       .gui-sub-grid { grid-template-columns: 1fr; }
-      .download-banner { flex-direction: column; align-items: flex-start; }
+      .download-option { flex-direction: column; align-items: flex-start; }
       .btn { width: 100%; }
     }
   </style>
 </head>
 <body>
 
-<!-- NAVIGATION BAR -->
+<!-- Accessible Skip Link -->
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- NAVBAR -->
 <nav class="navbar" aria-label="Main Navigation">
   <div class="container nav-inner">
     <a class="nav-logo" href="#" aria-label="PC Optimizer Home">
@@ -958,11 +1031,12 @@
       <span>PC Optimizer</span>
     </a>
 
-    <ul class="nav-links">
-      <li><a href="#overview">Overview</a></li>
+    <ul class="nav-links" id="navMenu">
+      <li><a href="#overview" class="active">Overview</a></li>
       <li><a href="#demo">GUI App</a></li>
       <li><a href="#screenshots">Screenshots</a></li>
       <li><a href="#features">Features</a></li>
+      <li><a href="#security">Security</a></li>
       <li><a href="#download">Download</a></li>
       <li><a href="#faq">FAQ</a></li>
       <li>
@@ -972,11 +1046,14 @@
       </li>
     </ul>
 
-    <a class="btn btn-primary" href="#download" style="padding: 8px 18px; font-size: 13.5px;">
+    <a class="btn btn-primary" href="#download" style="padding: 8px 18px; font-size: 13.5px; min-height: 38px;">
       Download App
     </a>
   </div>
 </nav>
+
+<!-- MAIN CONTENT LANDMARK -->
+<main id="main-content">
 
 <!-- HERO SECTION -->
 <section class="hero" id="overview" aria-labelledby="hero-heading">
@@ -998,7 +1075,7 @@
     <div class="hero-actions">
       <a class="btn btn-primary" href="/optimizer.exe" aria-label="Download optimizer.exe directly">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Download optimizer.exe
+        Download optimizer.exe (GUI)
       </a>
 
       <a class="btn btn-secondary" href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener" aria-label="View Source Code on GitHub (opens in new tab)">
@@ -1011,17 +1088,17 @@
     <div class="trust-grid">
       <div class="trust-card">
         <div class="trust-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
         <div>
           <div class="trust-title">Open Source</div>
-          <div class="trust-desc">Transparent code licensed under MIT for privacy.</div>
+          <div class="trust-desc">Transparent Python code under MIT License.</div>
         </div>
       </div>
 
       <div class="trust-card">
         <div class="trust-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
         </div>
         <div>
           <div class="trust-title">Standalone EXE</div>
@@ -1031,7 +1108,7 @@
 
       <div class="trust-card">
         <div class="trust-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <div>
           <div class="trust-title">Safe Optimization</div>
@@ -1041,7 +1118,7 @@
 
       <div class="trust-card">
         <div class="trust-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
         </div>
         <div>
           <div class="trust-title">Windows 10/11 Ready</div>
@@ -1052,7 +1129,7 @@
   </div>
 </section>
 
-<!-- INTERACTIVE WINDOW PREVIEW MOCKUP -->
+<!-- INTERACTIVE DESKTOP APP PREVIEW MOCKUP -->
 <section class="preview-section" id="demo" aria-label="Desktop App Interface Preview">
   <div class="container">
     <div class="app-window-frame">
@@ -1090,12 +1167,12 @@
           </div>
         </div>
 
-        <!-- Main Button -->
+        <!-- Main Action Button -->
         <button class="gui-main-btn" id="mockMainBtn" onclick="simulateGuiClick()">
           🚀 Optimize My PC
         </button>
 
-        <!-- Secondary Sub-Grid -->
+        <!-- Secondary Button Grid -->
         <div class="gui-sub-grid">
           <div class="gui-sub-btn active-purple" role="status">🎮 Gaming Mode</div>
           <div class="gui-sub-btn" role="status">↩ Restore Normal</div>
@@ -1113,33 +1190,42 @@
   </div>
 </section>
 
-<!-- REAL SCREENSHOTS SHOWCASE -->
+<!-- REAL SCREENSHOTS SHOWCASE (WITH LIGHTBOX) -->
 <section class="section" id="screenshots" style="background: var(--surface-1); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
   <div class="container">
     <div class="section-header">
       <div class="badge-eyebrow" style="margin-bottom: 12px;">Application Showcase</div>
       <h2 class="section-title">Real Desktop App Screenshots</h2>
-      <p class="section-desc">Experience the clean, intuitive desktop interface built with native Python Tkinter.</p>
+      <p class="section-desc">Actual desktop window captures built with native Python Tkinter on Windows 11. Click any screenshot to expand.</p>
     </div>
 
     <div class="screenshots-grid">
-      <div class="screenshot-card">
+      <div class="screenshot-card" onclick="openLightbox('/assets/screenshot1.png', 'Desktop App GUI Interface — PC Health Score & 1-Click Tuning Actions')">
         <img src="/assets/screenshot1.png" alt="PC Optimizer Desktop GUI Interface" width="600" height="400" loading="lazy" />
-        <div class="screenshot-meta">Desktop App GUI Interface</div>
+        <div class="screenshot-meta">Desktop App GUI Interface (Click to expand)</div>
       </div>
 
-      <div class="screenshot-card">
+      <div class="screenshot-card" onclick="openLightbox('/assets/screenshot2.png', 'Health Score & Optimization Activity Log — Real-time progress monitoring')">
         <img src="/assets/screenshot2.png" alt="Health Score & Optimization Log" width="600" height="400" loading="lazy" />
-        <div class="screenshot-meta">Health Score &amp; Optimization Log</div>
+        <div class="screenshot-meta">Health Score &amp; Optimization Log (Click to expand)</div>
       </div>
 
-      <div class="screenshot-card">
+      <div class="screenshot-card" onclick="openLightbox('/assets/screenshot3.png', '1-Click Tuning & Restore Normal Actions — Original state restoration controls')">
         <img src="/assets/screenshot3.png" alt="1-Click Tuning & Restore Actions" width="600" height="400" loading="lazy" />
-        <div class="screenshot-meta">1-Click Tuning &amp; Restore Actions</div>
+        <div class="screenshot-meta">1-Click Tuning &amp; Restore Actions (Click to expand)</div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- LIGHTBOX MODAL -->
+<div class="lightbox-modal" id="lightboxModal" onclick="closeLightbox(event)">
+  <div class="lightbox-content" onclick="event.stopPropagation()">
+    <button class="lightbox-close" onclick="closeLightbox()" aria-label="Close image preview">✕</button>
+    <img id="lightboxImg" src="" alt="Expanded screenshot view" />
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+  </div>
+</div>
 
 <!-- FEATURES GRID SECTION -->
 <section class="section" id="features">
@@ -1157,6 +1243,7 @@
         </div>
         <h3 class="feature-title">Live PC Health Score</h3>
         <p class="feature-desc">Calculates your real-time system health score (0–100) based on RAM pressure, disk space, temp file size, telemetry, and startup items.</p>
+        <span class="feature-meta-tag">User / Admin Mode</span>
       </div>
 
       <div class="feature-card">
@@ -1165,6 +1252,7 @@
         </div>
         <h3 class="feature-title">Safe Cleanup Engine</h3>
         <p class="feature-desc">Cleans temp files, flushes DNS, optimizes startup, and disables telemetry safely — designed with safe defaults to prevent system hangs.</p>
+        <span class="feature-meta-tag">Admin Required • Reversible</span>
       </div>
 
       <div class="feature-card">
@@ -1173,6 +1261,7 @@
         </div>
         <h3 class="feature-title">Gaming Mode</h3>
         <p class="feature-desc">Switches power plan to High Performance and disables GameDVR background recording to prevent micro-stuttering while gaming.</p>
+        <span class="feature-meta-tag">Admin Required • Reversible</span>
       </div>
 
       <div class="feature-card">
@@ -1181,6 +1270,7 @@
         </div>
         <h3 class="feature-title">Weekly Scheduler</h3>
         <p class="feature-desc">One click sets up a native Windows Scheduled Task using optimizer-auto.exe to keep your PC automatically optimized every Sunday at 3:00 AM.</p>
+        <span class="feature-meta-tag">Admin Required • Reversible</span>
       </div>
 
       <div class="feature-card">
@@ -1189,6 +1279,7 @@
         </div>
         <h3 class="feature-title">System Protection</h3>
         <p class="feature-desc">Creates a System Restore Point first, keeps Superfetch (SysMain) active for fast app launches, and avoids aggressive RAM flushes.</p>
+        <span class="feature-meta-tag">System Protection</span>
       </div>
 
       <div class="feature-card">
@@ -1197,31 +1288,106 @@
         </div>
         <h3 class="feature-title">Standalone Desktop App</h3>
         <p class="feature-desc">No Python setup needed. Double-click <code>optimizer.exe</code>, grant admin permission, and use the desktop GUI window directly.</p>
+        <span class="feature-meta-tag">Standalone Binary</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- DOWNLOAD & METADATA SECTION -->
-<section class="section" id="download" style="background: var(--surface-1); border-top: 1px solid var(--border);">
+<!-- SECURITY & VERIFICATION SECTION -->
+<section class="section" id="security" style="background: var(--surface-1); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="container">
+    <div class="section-header">
+      <div class="badge-eyebrow" style="margin-bottom: 12px;">Security Architecture</div>
+      <h2 class="section-title">Transparency &amp; Verification</h2>
+      <p class="section-desc">PC Optimizer is designed to be fully auditable, reversible, and safe.</p>
+    </div>
+
+    <div class="security-panel">
+      <div>
+        <div class="sec-item-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Open Source MIT License
+        </div>
+        <p class="sec-item-desc">
+          Every line of code is published on GitHub under the MIT License. Anyone can audit how registry keys, services, and cleanup files are accessed.
+        </p>
+      </div>
+
+      <div>
+        <div class="sec-item-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          True Original State Restoration
+        </div>
+        <p class="sec-item-desc">
+          Original system values (Power Plan GUID, Visual Effects, GameDVR, Telemetry service mode) are captured prior to modification and restored only if modified by this application.
+        </p>
+      </div>
+
+      <div>
+        <div class="sec-item-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          SHA256 Checksum Verification
+        </div>
+        <p class="sec-item-desc">
+          Every build produces <code>SHA256SUMS.txt</code> and <code>release_manifest.json</code> containing computed file hashes for complete integrity verification.
+        </p>
+      </div>
+
+      <div>
+        <div class="sec-item-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Antivirus &amp; SmartScreen Context
+        </div>
+        <p class="sec-item-desc">
+          Static ML heuristic scanners (e.g. <code>Wacatac.B!ml</code>) flag generic PyInstaller bootloaders because the file is not signed with an expensive EV code signing certificate.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD SECTION -->
+<section class="section" id="download">
   <div class="container">
     <div class="section-header">
       <div class="badge-eyebrow" style="margin-bottom: 12px;">Get Started</div>
       <h2 class="section-title">Download PC Optimizer</h2>
-      <p class="section-desc">Standalone executable for Windows 10 & 11 (64-bit). No installation wizard required.</p>
+      <p class="section-desc">Standalone executables for Windows 10 & 11 (64-bit). No installation wizard required.</p>
     </div>
 
     <div class="download-card-grid">
       <div class="download-panel">
-        <div class="download-banner">
+        <!-- Option A: GUI App -->
+        <div class="download-option">
           <div>
-            <div class="download-banner-title">optimizer.exe — Standalone Windows App</div>
-            <div class="download-banner-sub">Version 2.0.1 • Open Source • MIT License</div>
+            <div class="download-opt-title">optimizer.exe — Desktop GUI Application</div>
+            <div class="download-opt-sub">Version 2.0.1 • Standalone Binary • ~11.1 MB</div>
+            <div class="hash-code">SHA256: 26aa2b17d294cd0ab7711809f9b7ea65916f7b4b2b4a96c8de9d700e2a205c98</div>
           </div>
-          <a class="btn btn-primary" href="/optimizer.exe" aria-label="Download optimizer.exe binary directly">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download optimizer.exe
+          <a class="btn btn-primary" href="/optimizer.exe" aria-label="Download optimizer.exe desktop GUI binary">
+            ⬇ Download GUI
           </a>
+        </div>
+
+        <!-- Option B: CLI App -->
+        <div class="download-option">
+          <div>
+            <div class="download-opt-title">optimizer-auto.exe — Headless CLI (Scheduled Task)</div>
+            <div class="download-opt-sub">Version 2.0.1 • Console Binary • ~11.1 MB</div>
+            <div class="hash-code">SHA256: 59ee89e557ed69c6696dd6a34f1321f7f8109fb58441b6902434234f5932f993</div>
+          </div>
+          <a class="btn btn-secondary" href="/optimizer-auto.exe" aria-label="Download optimizer-auto.exe CLI binary">
+            ⬇ Download CLI
+          </a>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <div style="font-weight: 600; font-size: 14px; color: var(--text-primary); margin-bottom: 8px;">Option C: Verified PowerShell Setup Script</div>
+          <pre style="background: #060709; border: 1px solid var(--border); padding: 12px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12.5px; color: var(--accent); overflow-x: auto;">iwr -useb https://raw.githubusercontent.com/Naraito-ai/pc-optimizer/main/install.ps1 | iex</pre>
+          <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 6px;">
+            The installer script downloads <code>optimizer.exe</code>, computes SHA256 hash, verifies against release manifest, and asks for explicit <code>[Y/N]</code> confirmation.
+          </p>
         </div>
 
         <ul class="step-list">
@@ -1231,20 +1397,20 @@
           </li>
           <li class="step-item">
             <div class="step-number">2</div>
-            <span>Double-click <strong>optimizer.exe</strong> — Windows will prompt for Administrator permission.</span>
+            <span>Double-click <strong>optimizer.exe</strong> — the application opens in User Mode.</span>
           </li>
           <li class="step-item">
             <div class="step-number">3</div>
-            <span>The desktop application window opens with your PC Health Score and 1-Click buttons!</span>
+            <span>Click <strong>Optimize My PC</strong> — Windows will prompt for Administrator permission when executing system tuning.</span>
           </li>
         </ul>
 
         <div class="notice-box">
-          <div class="notice-icon">
+          <div style="flex-shrink: 0; margin-top: 2px;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           </div>
           <div>
-            <strong>SmartScreen &amp; Antivirus Notice:</strong> Windows SmartScreen &amp; static heuristic scanners (e.g. <code>Wacatac.B!ml</code>) flag generic PyInstaller bootloaders because the file is not signed with an expensive EV code signing certificate. All 64 major signature engines (Kaspersky, BitDefender, Sophos, Symantec, Avast, ESET) report 0 detections.
+            <strong>SmartScreen &amp; Antivirus Notice:</strong> Windows SmartScreen &amp; static heuristic scanners flag generic PyInstaller bootloaders because the file is not signed with an expensive EV code signing certificate. All 64 major signature engines (Kaspersky, BitDefender, Sophos, Symantec, Avast, ESET) report 0 detections.
           </div>
         </div>
       </div>
@@ -1292,12 +1458,13 @@
         <span>• Maintenance &amp; Distribution Release</span>
       </div>
       <ul class="changelog-items">
-        <li><div class="changelog-dot"></div><span>Separated GUI (optimizer.exe) and CLI (optimizer-auto.exe) builds so scheduled tasks preserve output logging without suppressing CLI stdout</span></li>
-        <li><div class="changelog-dot"></div><span>Fixed install.ps1 UAC elevation bug when piped via iwr | iex</span></li>
+        <li><div class="changelog-dot"></div><span>Implemented Phase 7 privilege reduction (on-demand UAC elevation allowing GUI launch in User Mode)</span></li>
+        <li><div class="changelog-dot"></div><span>Separated GUI (optimizer.exe) and CLI (optimizer-auto.exe) builds so scheduled tasks preserve output logging</span></li>
+        <li><div class="changelog-dot"></div><span>Refactored install.ps1 to download binary, display SHA256 checksum, verify manifest, and prompt for execution</span></li>
         <li><div class="changelog-dot"></div><span>Added health score 30s calculation cache to prevent UI freezes on large temp folders</span></li>
         <li><div class="changelog-dot"></div><span>Added Gaming Mode visual indicator button state ("Gaming Mode: ON")</span></li>
         <li><div class="changelog-dot"></div><span>Added Type-Aware startup entry restoration (REG_DWORD / REG_SZ / REG_EXPAND_SZ)</span></li>
-        <li><div class="changelog-dot"></div><span>Embedded Windows VersionInfo PE metadata and added antivirus false positive notice label</span></li>
+        <li><div class="changelog-dot"></div><span>Embedded Windows VersionInfo PE metadata (v2.0.1.0) and added antivirus false positive notice label</span></li>
       </ul>
     </div>
   </div>
@@ -1346,18 +1513,22 @@
   </div>
 </section>
 
+</main>
+
 <!-- FOOTER -->
 <footer class="site-footer">
   <div class="container">
     <p>
       Maintained by <a href="https://github.com/Naraito-ai" target="_blank" rel="noopener">@Naraito-ai</a> ·
       MIT License ·
-      <a href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener">GitHub Repository ↗</a>
+      <a href="https://github.com/Naraito-ai/pc-optimizer" target="_blank" rel="noopener">GitHub Repository ↗</a> ·
+      <a href="/release_manifest.json" target="_blank" rel="noopener">Release Manifest</a>
     </p>
   </div>
 </footer>
 
 <script>
+  // Interactive GUI Demo Simulation
   let isDemoRunning = false;
   function simulateGuiClick() {
     if (isDemoRunning) return;
@@ -1402,6 +1573,48 @@
       isDemoRunning = false;
     }, 2850);
   }
+
+  // Lightbox Modal Functions
+  function openLightbox(src, caption) {
+    const modal = document.getElementById('lightboxModal');
+    const img = document.getElementById('lightboxImg');
+    const cap = document.getElementById('lightboxCaption');
+    img.src = src;
+    cap.textContent = caption;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox(event) {
+    const modal = document.getElementById('lightboxModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  // Active Navbar Section Highlighter via IntersectionObserver
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.getAttribute('id');
+        navLinks.forEach(link => {
+          if (link.getAttribute('href') === `#${id}`) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+
+  sections.forEach(sec => observer.observe(sec));
 </script>
 </body>
 </html>
